@@ -24,4 +24,4 @@ Before using the scripts you need to modify the mysql parameters (host, user, pa
 Use example.php as sample code for integrating analytics.php into your own scripts.
 ($b1_analytics->echoscript() is not necessary and might breaks the design of your website if used.)
 
-### Always remember to inform your users of data collection in your privacy policy!
+### Always remember to inform your users about data collection in your privacy policy!
