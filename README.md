@@ -5,6 +5,18 @@ beranek1 analytics is a yet unfinished project based on php scripts I made in my
 
 analyser.php and statistics.php are just experimental yet, but shall work.
 
+## Scripts
+### analytics.php
+The main script necessary for collecting and saving data, setting cookies, creating tables and identifying the visitors.
+### database.php
+Creates the database connection and holds settings
+### example.php
+An usage example, that outputs a script for additional tracking using echoscript()
+### *analyser.php*
+Holds functions for creating statistics, unfinished
+### *statistics.php*
+Simple website that shows statistics based on the collected data
+
 ## Usage
 
 Before using the scripts you need to modify the mysql parameters (host, user, password, database) in database.php else none of the scripts will work.
