@@ -1,7 +1,7 @@
 <?php
 /*
 -----------------------------------
-beranek1 analytics
+b1 web analytics
 -----------------------------------
 made by beranek1
 https://github.com/beranek1
