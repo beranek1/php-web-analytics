@@ -316,14 +316,14 @@ class b1_analytics {
         }
     }
     
-    // Anonymizes the ip adress (might required in germany)
+    // Anonymizes the ip adress
     function anonymize_ip() {
         //We add a prefix to reduce the chance of having two or more ip adresses with the same name.
         $prefix = "ipv4";
         if(filter_var($this->u_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             $prefix = "ipv6";
         }
-        $anonymous_ip = $prefix + "." + md5($this->u_ip);
+        $this->u_ip = $prefix + "." + md5($this->u_ip);
     }
     
     // Gives the ISP an unique id
@@ -356,7 +356,7 @@ class b1_analytics {
             }
         } else {
             $this->unid = $this->generateid(15);
-            $this->exgenquery($mysql, "networks", array("ip" => $this->user_ip, "host" => $this->u_host, "country" => $this->u_country_code, "isp_id" => $this->isp_id), $this->unid);
+            $this->exgenquery($mysql, "networks", array("ip" => $this->u_ip, "host" => $this->u_host, "country" => $this->u_country_code, "isp_id" => $this->isp_id), $this->unid);
         }
     }
     
@@ -576,6 +576,9 @@ class b1_analytics {
             } else { $this->d = $domain; }
             $this->getmobile();
             $this->getlocation($reader);
+            if($anonymousips) {
+                anonymize_ip();
+            }
             $this->getisp($mysql);
             $this->getunid($mysql);
             $this->getbot();
