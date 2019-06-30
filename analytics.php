@@ -1,12 +1,14 @@
 <?php
 /*
------------------------------------
-b1 web analytics
------------------------------------
-made by beranek1
-https://github.com/beranek1
------------------------------------
+#-----------------------------------------
+| b1 web analytics
+| https://beranek1.github.io/webanalytics/
+#-----------------------------------------
+| made by beranek1
+| https://github.com/beranek1
+#-----------------------------------------
 */
+
 class b1_analytics {
     public $a = array();
     public $s = null;

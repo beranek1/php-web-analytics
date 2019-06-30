@@ -1,12 +1,14 @@
 <?php
 /*
------------------------------------
-b1 analytics: analyser
------------------------------------
-made by beranek1
-https://github.com/beranek1
------------------------------------
+#-----------------------------------------
+| b1 web analytics: analyser
+| https://beranek1.github.io/webanalytics/
+#-----------------------------------------
+| made by beranek1
+| https://github.com/beranek1
+#-----------------------------------------
 */
+
 class b1_analyser {
     public $total_requests = null;
     public $total_visitors = null;
