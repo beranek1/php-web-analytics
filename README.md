@@ -5,6 +5,13 @@ b1 analytics is a yet unfinished project based on php scripts I made in my past 
 
 analyser.php and statistics.php are just experimental yet, but shall work.
 
+## Why should I use b1 web analytics?
+There are atleast 4 reasons:
+* **it's server-sided**
+* **it's independent**
+* **it's open source**
+* **it's free**
+
 ## Scripts
 ### analytics.php
 The main script necessary for collecting and saving data, setting cookies, creating tables and identifying the visitors.
@@ -18,7 +25,6 @@ Holds functions for creating statistics, unfinished
 Simple website that shows statistics based on the collected data
 
 ## Usage
-
 Before using the scripts you need to modify the mysql parameters (host, user, password, database) in database.php else none of the scripts will work.
 
 Use example.php as sample code for integrating analytics.php into your own scripts.
