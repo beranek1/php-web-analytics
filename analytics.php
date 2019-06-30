@@ -300,7 +300,7 @@ class b1_analytics {
     function getlocation() {
         $this->u_ip = $this->s['REMOTE_ADDR'];
         $this->u_host = gethostbyaddr($this->u_ip);
-        if(filter_var($this->user_host, FILTER_VALIDATE_IP) == false) {
+        if(filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
             $domainparts = explode(".", $this->u_host);
             $domainend = $domainparts[count($domainparts) - 1];
             if(strlen($domainend) == 2) {
@@ -482,7 +482,7 @@ class b1_analytics {
             if($this->u_language != null) {
                 $result = $mysql->query("SELECT id FROM uniquebrowsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language = '".$this->u_language."' AND last >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
             } else {
-                if($this->user_bot == 1) {
+                if($this->u_bot == 1) {
                     $result = $mysql->query("SELECT id FROM uniquebrowsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND bot = 1 AND last >= '".date('Y-m-d H:i:s', strtotime("-90 days"))."';");
                 } else {
                     $result = $mysql->query("SELECT id FROM uniquebrowsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND last >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
@@ -524,7 +524,7 @@ class b1_analytics {
                 $this->user_ubid = $this->generateid(15);
                 $this->exgenquery($mysql, "clientids", array("domain" => $this->d, "ubid" => $this->ubid, "agent_id" => $this->agent_id), $cid);
                 setcookie("trkcid", $cid, time()+60*60*24*180, "/", $this->d);
-                $this->exgenquery($mysql, "uniquebrowsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->user_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
+                $this->exgenquery($mysql, "uniquebrowsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
             }
         }
     }
@@ -556,7 +556,7 @@ class b1_analytics {
         }
         $this->rid = $this->generateid(15);
         $this->r_domain = strtolower($this->s["HTTP_HOST"]);
-        $this->exgenquery($mysql, "requests", array("accept" => $this->r_accept, "protocol" => $this->r_protocol, "port" => $this->r_port, "host" => $this->r_domain, "uri" => $this->r_target, "referrer" => $this->r_origin, "visitor_ip" => $this->u_ip, "visitor_country" => $this->user_country_code, "cf_ray_id" => $this->r_rayid, "browser_id" => $this->ubid, "network_id" => $this->unid), $this->rid);
+        $this->exgenquery($mysql, "requests", array("accept" => $this->r_accept, "protocol" => $this->r_protocol, "port" => $this->r_port, "host" => $this->r_domain, "uri" => $this->r_target, "referrer" => $this->r_origin, "visitor_ip" => $this->u_ip, "visitor_country" => $this->u_country_code, "cf_ray_id" => $this->r_rayid, "browser_id" => $this->ubid, "network_id" => $this->unid), $this->rid);
     }
     
     // Construct: b1_analytics({mysql}, $_SERVER, $_COOKIE)
@@ -577,7 +577,7 @@ class b1_analytics {
             $this->getmobile();
             $this->getlocation($reader);
             if($anonymousips) {
-                anonymize_ip();
+                $this->anonymize_ip();
             }
             $this->getisp($mysql);
             $this->getunid($mysql);
