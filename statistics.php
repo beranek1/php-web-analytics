@@ -1,7 +1,7 @@
 <?php
 /*
 -----------------------------------
-beranek1 statistics for analytics
+b1 analytics: statistics viewer
 -----------------------------------
 made by beranek1
 https://github.com/beranek1
