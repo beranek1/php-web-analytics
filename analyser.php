@@ -1,7 +1,7 @@
 <?php
 /*
 -----------------------------------
-beranek1 analyser for analytics
+b1 analytics: analyser
 -----------------------------------
 made by beranek1
 https://github.com/beranek1
