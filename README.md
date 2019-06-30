@@ -1,4 +1,4 @@
-# beranek1 analytics
+# b1 web analytics
 A ready to use collection of php scripts for web analytics.
 
 beranek1 analytics is a yet unfinished project based on php scripts I made in my past for analysing web traffic, feel free to leave feedback and use them for your own projects. Currently I have no concrete plans on finishing or continuing the project, but I'll use the time I have to fix bugs and keep it working.
