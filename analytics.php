@@ -10,7 +10,6 @@
 */
 
 class b1_analytics {
-    public $a = array();
     public $s = null;
     public $h = null;
     public $d = null;
@@ -44,8 +43,6 @@ class b1_analytics {
     public $r_domain = null;
     public $r_accept = null;
     public $u_port = null;
-    public $domain = null;
-    public $anonymous_ip = null;
     
     function get_row_count($query, $mysql) {
         $count = 0;
@@ -124,23 +121,15 @@ class b1_analytics {
     
     // Checks user agent and hostname to find out whether the visitor is a bot
     function getbot() {
-        $bot = 0;
-        if(preg_match('/googlebot/i', $this->ua) && ($this->endsWith($this->u_host, ".googlebot.com") || $this->endsWith($this->u_host, ".google.com"))) {
-            $bot = 1;
-        } elseif (preg_match('/bingbot/i', $this->ua) && $this->endsWith($this->u_host, ".search.msn.com")) {
-            $bot = 1;
-        } elseif ((preg_match('/yandexbot/i', $this->ua) || preg_match('/yandeximages/i', $this->ua)) && $this->endsWith($this->u_host, ".yandex.com")) {
-            $bot = 1;
-        } elseif (preg_match('/baiduspider/i', $this->ua) && $this->endsWith($this->u_host, ".crawl.baidu.com")) {
-            $bot = 1;
-        } elseif ((preg_match('/duckduckbot/i', $this->ua) || preg_match('/duckduckgo/i', $this->ua)) && $this->startsWith($this->u_host, "72.94.249.")) {
-            $bot = 1;
-        } elseif (preg_match('/archive.org_bot/i', $this->ua) && $this->endsWith($this->u_host, ".archive.org")) {
-            $bot = 1;
+        if((preg_match('/googlebot/i', $this->ua) && ($this->endsWith($this->u_host, ".googlebot.com") || $this->endsWith($this->u_host, ".google.com"))) ||
+            (preg_match('/bingbot/i', $this->ua) && $this->endsWith($this->u_host, ".search.msn.com")) ||
+            (preg_match('/yandexbot/i', $this->ua) || preg_match('/yandeximages/i', $this->ua)) && $this->endsWith($this->u_host, ".yandex.com") ||
+            (preg_match('/baiduspider/i', $this->ua) && $this->endsWith($this->u_host, ".crawl.baidu.com")) ||
+            ((preg_match('/duckduckbot/i', $this->ua) || preg_match('/duckduckgo/i', $this->ua)) && $this->startsWith($this->u_host, "72.94.249.")) ||
+            (preg_match('/archive.org_bot/i', $this->ua) && $this->endsWith($this->u_host, ".archive.org"))) {
+            $this->u_bot = 1;
         }
-        $this->u_bot = $bot;
-        $bot_array = array(
-                        '/googlebot/i' => 'Google',
+        $bot_array = array('/googlebot/i' => 'Google',
                         '/bingbot/i' => 'Bing',
                         '/twitterbot/i' => 'Twitter',
                         '/baiduspider/i' => 'Baidu',
@@ -158,7 +147,6 @@ class b1_analytics {
     
     //  Gets the os name and version from the user agent
     function getos() {
-        $os_platform = null;
         $os_array = array('/windows nt/i' => 'Windows',
                         '/windows nt 10/i' => 'Windows 10',
                         '/windows nt 6.3/i' => 'Windows 8.1',
@@ -201,15 +189,13 @@ class b1_analytics {
                         );
         foreach ($os_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $os_platform = $value;
+                $this->u_os = $value;
             }
         }
-        $this->u_os = $os_platform;
     }
     
     // Gets the type of device from the user agent
     function getdevice() {
-        $device = null;
         $device_array = array('/windows nt/i' => 'PC',
                         '/windows xp/i' => 'PC',
                         '/windows me/i' => 'PC',
@@ -241,15 +227,13 @@ class b1_analytics {
                         );
         foreach ($device_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $device = $value;
+                $this->u_device = $value;
             }
         }
-        $this->u_device = $device;
     }
     
     // Gets the browser name from the user agents
     function getbrowser() {
-        $browser = null;
         $browser_array = array(
             '/mozilla/i' => 'Mozilla Compatible Agent',
             '/applewebkit/i' => 'AppleWebKit Agent',
@@ -284,19 +268,16 @@ class b1_analytics {
         );
         foreach ($browser_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $browser = $value;
+                $this->u_browser = $value;
             }
         }
-        $this->user_browser = $browser;
     }
     
     // Checks whether the visitor uses a mobile device using the user agent
     function getmobile() {
-        $mobile = null;
         if (preg_match('/mobile/i', $this->ua)) {
-            $mobile = 1;
+            $this->u_mobile = 1;
         }
-        $this->u_mobile = $mobile;
     }
     
     // Gets user language and country from hostname and http header
@@ -537,7 +518,7 @@ class b1_analytics {
         if(isset($this->s["REQUEST_URI"])) {
             $uri = $this->s["REQUEST_URI"];
             if($uri != null && $uri != "" && $uri != "/") {
-                $this->r_target = $this->s["REQUEST_URI"];
+                $this->r_target = $uri;
             }
         }
         if(isset($this->s["HTTP_REFERER"])) {
