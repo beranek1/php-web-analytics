@@ -52,7 +52,7 @@ if($total_requests == 0) {
     $b1_analytics_db->close();
     return;
 }
-$ttlvstrsr = get_one_row("SELECT COUNT(*) FROM uniquebrowsers;", $b1_analytics_db);
+$ttlvstrsr = get_one_row("SELECT COUNT(*) FROM browsers;", $b1_analytics_db);
 $total_visitors = $ttlvstrsr[0];
 $ttlntwsr = get_one_row("SELECT COUNT(*) FROM networks;", $b1_analytics_db);
 $total_networks = $ttlntwsr[0];
@@ -77,7 +77,7 @@ foreach($mstrqstsr as $country) {
 }
 arsort($top_continents);
 $total_countries = 0;
-$tpvstrsor = get_rows_array("SELECT `country`, COUNT(*) FROM uniquebrowsers GROUP BY `country` ORDER BY COUNT(*) DESC;", $b1_analytics_db);
+$tpvstrsor = get_rows_array("SELECT `country`, COUNT(*) FROM browsers GROUP BY `country` ORDER BY COUNT(*) DESC;", $b1_analytics_db);
 $top_countriesvo = array();
 foreach($tpvstrsor as $country) {
     if($country[0] != "" && $country[0] != null) {
@@ -87,7 +87,7 @@ foreach($tpvstrsor as $country) {
         $top_countriesvo["?"] = $country[1];
     }
 }
-$tplngsr = get_rows_array("SELECT `language`, COUNT(*) FROM uniquebrowsers GROUP BY `language` ORDER BY COUNT(*) DESC;", $b1_analytics_db);
+$tplngsr = get_rows_array("SELECT `language`, COUNT(*) FROM browsers GROUP BY `language` ORDER BY COUNT(*) DESC;", $b1_analytics_db);
 $top_languages = array();
 $total_languages = 0;
 foreach($tplngsr as $language) {
@@ -98,7 +98,7 @@ foreach($tplngsr as $language) {
         $top_languages["?"] = $language[1];
     }
 }
-$tpusragntsr = get_rows_array("SELECT `agent_id`, COUNT(*) FROM uniquebrowsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;", $b1_analytics_db);
+$tpusragntsr = get_rows_array("SELECT `agent_id`, COUNT(*) FROM browsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;", $b1_analytics_db);
 $top_useragents = array();
 foreach($tpusragntsr as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];

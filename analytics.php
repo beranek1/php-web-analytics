@@ -107,7 +107,9 @@ class b1_analytics {
     
     function exgenquery($mysql, $table, $ary, $id, $field = "id") {
         $addquery = $this->generatequery($ary, $id, $field);
-        $mysql->query("INSERT INTO ".$table." (".$addquery["keys"].") VALUES (".$addquery["values"].");");
+        if(!$mysql->query("INSERT INTO ".$table." (".$addquery["keys"].") VALUES (".$addquery["values"].");")) {
+            error_log("".$mysql->error."\n");
+        }
     }
     
     // Checks whether a string starts with a specific word
@@ -325,7 +327,7 @@ class b1_analytics {
     
     // Gives the ISP an unique id
     function getisp($mysql) {
-        $mysql->query("CREATE TABLE IF NOT EXISTS `isps` (id VARCHAR(10) PRIMARY KEY, domain VARCHAR(127) NOT NULL, name TEXT, country VARCHAR(2), last TIMESTAMP NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `isps` (id VARCHAR(10) PRIMARY KEY, domain VARCHAR(127) NOT NULL, name TEXT, country VARCHAR(2), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         $ispdomain = null;
         if(isset($this->u_host) && filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
             $domainparts = explode(".", $this->u_host);
@@ -344,7 +346,7 @@ class b1_analytics {
     
     // Gives the network an unique id
     function getunid($mysql) {
-        $mysql->query("CREATE TABLE IF NOT EXISTS `networks` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45) NOT NULL, host VARCHAR(253), country VARCHAR(2), isp_id VARCHAR(10), last TIMESTAMP NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `networks` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45) NOT NULL, host VARCHAR(253), country VARCHAR(2), isp_id VARCHAR(10), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         $nrow = $this->get_one_row("SELECT id, host FROM networks WHERE ip = '".$this->u_ip."' LIMIT 1;", $mysql);
         if($nrow != null) {
             $this->unid = $nrow[0];
@@ -359,9 +361,9 @@ class b1_analytics {
     
     // Gives the user agent an unique id to make it shorter
     function getuaid($mysql) {
-        $mysql->query("CREATE TABLE IF NOT EXISTS `useragents` (id VARCHAR(10) PRIMARY KEY, agent TEXT, browser VARCHAR(40), os VARCHAR(40), device VARCHAR(40), mobile TINYINT(1), bot TINYINT(1), bot_name VARCHAR(30), created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `agents` (id VARCHAR(10) PRIMARY KEY, agent TEXT, browser VARCHAR(40), os VARCHAR(40), device VARCHAR(40), mobile TINYINT(1), bot TINYINT(1), bot_name VARCHAR(30), `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         if($this->ua != null && $this->ua != "") {
-            $aidrow = $this->get_one_row("SELECT id, browser, os, device FROM useragents WHERE agent LIKE '".$this->ua."' LIMIT 1;", $mysql);
+            $aidrow = $this->get_one_row("SELECT id, browser, os, device FROM agents WHERE agent LIKE '".$this->ua."' LIMIT 1;", $mysql);
             if($aidrow != null) {
                 $this->agent_id = $aidrow[0];
                 $this->u_browser = $aidrow[1];
@@ -372,14 +374,14 @@ class b1_analytics {
                 $this->getdevice();
                 $this->getbrowser();
                 $this->agent_id = $this->generateid();
-                $this->exgenquery($mysql, "useragents", array("agent" => $this->ua, "browser" => $this->u_browser, "os" => $this->u_os, "device" => $this->u_device, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "bot_name" => $this->bot_name), $this->agent_id);
+                $this->exgenquery($mysql, "agents", array("agent" => $this->ua, "browser" => $this->u_browser, "os" => $this->u_os, "device" => $this->u_device, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "bot_name" => $this->bot_name), $this->agent_id);
             }
         }
     }
     
     // Uses the cookies set by the javascript from echoscript() to give the device a unique profile id
     function getupid($mysql) {
-        $mysql->query("CREATE TABLE IF NOT EXISTS `uniqueprofiles` (id VARCHAR(10) PRIMARY KEY, screen_width INT(9), screen_height VARCHAR(9), interface_width INT(9), interface_height INT(9), colordepth INT(7), pixeldepth INT(7), cookiesenabled TINYINT(1), javaenabled TINYINT(1), created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `profiles` (id VARCHAR(10) PRIMARY KEY, screen_width INT(9), screen_height VARCHAR(9), interface_width INT(9), interface_height INT(9), colordepth INT(7), pixeldepth INT(7), cookiesenabled TINYINT(1), javaenabled TINYINT(1), `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         if(isset($this->c["deviceprofile"]) && isset($this->c["browserprofile"])) {
             $this->u_profile = array();
             $deviceprofile = json_decode($this->c["deviceprofile"], true);
@@ -429,45 +431,45 @@ class b1_analytics {
                 }
                 $search_count++;
             }
-            $pidrow = $this->get_one_row("SELECT id FROM uniqueprofiles WHERE ".$search_query." LIMIT 1;", $mysql);
+            $pidrow = $this->get_one_row("SELECT id FROM profiles WHERE ".$search_query." LIMIT 1;", $mysql);
             if($pidrow != null) {
                 $this->profile_id = $pidrow[0];
             } else {
                 $this->profile_id = $this->generateid();
-                $this->exgenquery($mysql, "uniqueprofiles", $this->u_profile, $this->profile_id);
+                $this->exgenquery($mysql, "profiles", $this->u_profile, $this->profile_id);
             }
         }
     }
     
     // Identifies the user and updates information
     function getubid($mysql) {
-        $mysql->query("CREATE TABLE IF NOT EXISTS `clientids` (id VARCHAR(20) PRIMARY KEY, domain TEXT NOT NULL, ubid VARCHAR(15) NOT NULL, agent_id VARCHAR(10), last TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-        $mysql->query("CREATE TABLE IF NOT EXISTS `uniquebrowsers` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45) NOT NULL, country VARCHAR(2), language VARCHAR(2), mobile TINYINT(1), bot TINYINT(1), agent_id VARCHAR(10), network_id VARCHAR(15), profile_id VARCHAR(10), last TIMESTAMP NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `trackers` (id VARCHAR(20) PRIMARY KEY, domain TEXT NOT NULL, ubid VARCHAR(15) NOT NULL, agent_id VARCHAR(10), last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `browsers` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45) NOT NULL, country VARCHAR(2), language VARCHAR(2), mobile TINYINT(1), bot TINYINT(1), agent_id VARCHAR(10), network_id VARCHAR(15), profile_id VARCHAR(10), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         $identified = false;
-        if(isset($this->c["b1cid"])) {
-            $cookie_cid = $this->c["b1cid"];
+        if(isset($this->c["b1id"])) {
+            $cookie_cid = $this->c["b1id"];
             if(strlen($cookie_cid) == 20) {
-                $cidrow = $this->get_one_row("SELECT ubid FROM clientids WHERE id = '".$cookie_cid."' AND domain = '".$this->d."' LIMIT 1;", $mysql);
+                $cidrow = $this->get_one_row("SELECT ubid FROM trackers WHERE id = '".$cookie_cid."' AND domain = '".$this->d."' LIMIT 1;", $mysql);
                 if($cidrow != null) {
-                    $mysql->query("UPDATE clientids SET last = '".date('Y-m-d H:i:s')."' WHERE id = '".$cookie_cid."';");
-                    $row = $this->get_one_row("SELECT ip, network_id FROM uniquebrowsers WHERE id = '".$cidrow[0]."' LIMIT 1;", $mysql);
+                    $mysql->query("UPDATE trackers SET last_seen = '".date('Y-m-d H:i:s')."' WHERE id = '".$cookie_cid."';");
+                    $row = $this->get_one_row("SELECT ip, network_id FROM browsers WHERE id = '".$cidrow[0]."' LIMIT 1;", $mysql);
                     if($row != null) {
-                        setcookie("trkcid", $cookie_cid, time()+60*60*24*180, "/", $this->d);
+                        setcookie("b1id", $cookie_cid, time()+60*60*24*180, "/", $this->d);
                         $this->ubid = $cidrow[0];
                         if($this->u_ip != $row[0] && $this->u_ip != null && $this->u_ip != "") {
-                            $mysql->query("UPDATE uniquebrowsers SET ip = '".$this->u_ip."' WHERE id = '".$this->ubid."';");
+                            $mysql->query("UPDATE browsers SET ip = '".$this->u_ip."' WHERE id = '".$this->ubid."';");
                         }
                         if($row[1] != null && $row[1] != "") {
                             if($this->unid != $row[1] && $this->unid != null && $this->unid != "") {
-                                $mysql->query("UPDATE uniquebrowsers SET network_id = '".$this->unid."' WHERE id = '".$this->ubid."';");
+                                $mysql->query("UPDATE browsers SET network_id = '".$this->unid."' WHERE id = '".$this->ubid."';");
                             }
                         } else {
-                            $mysql->query("UPDATE uniquebrowsers SET network_id = '".$this->unid."' WHERE id = '".$this->ubid."';");
+                            $mysql->query("UPDATE browsers SET network_id = '".$this->unid."' WHERE id = '".$this->ubid."';");
                         }
                         if($this->profile_id != null) {
-                            $mysql->query("UPDATE uniquebrowsers SET profile_id = '".$this->profile_id."' WHERE id = '".$this->ubid."';");
+                            $mysql->query("UPDATE browsers SET profile_id = '".$this->profile_id."' WHERE id = '".$this->ubid."';");
                         }
-                        $mysql->query("UPDATE uniquebrowsers SET agent_id = '".$this->agent_id."', last = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
+                        $mysql->query("UPDATE browsers SET agent_id = '".$this->agent_id."', last_update = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
                         $identified = true;
                     }
                 }
@@ -477,12 +479,12 @@ class b1_analytics {
             $cid = $this->generateid(20);
             $result = null;
             if($this->u_language != null) {
-                $result = $mysql->query("SELECT id FROM uniquebrowsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language = '".$this->u_language."' AND last >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
+                $result = $mysql->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language = '".$this->u_language."' AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
             } else {
                 if($this->u_bot == 1) {
-                    $result = $mysql->query("SELECT id FROM uniquebrowsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND bot = 1 AND last >= '".date('Y-m-d H:i:s', strtotime("-90 days"))."';");
+                    $result = $mysql->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND bot = 1 AND last_update >= '".date('Y-m-d H:i:s', strtotime("-90 days"))."';");
                 } else {
-                    $result = $mysql->query("SELECT id FROM uniquebrowsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND last >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
+                    $result = $mysql->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
                 }
             }
             $data_ubid = "";
@@ -497,9 +499,9 @@ class b1_analytics {
             if($ubid_count == 1) {
                 $cidrow = null;
                 if($this->agent_id != null) {
-                    $cidrow = get_one_row("SELECT id, domain, last FROM clientids WHERE ubid = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY last DESC LIMIT 1;", $mysql);
+                    $cidrow = get_one_row("SELECT id, domain, last FROM trackers WHERE ubid = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY last_seen DESC LIMIT 1;", $mysql);
                 } else {
-                    $cidrow = get_one_row("SELECT id, domain, last FROM clientids WHERE ubid = '".$data_ubid."' AND agent_id IS NULL ORDER BY last DESC LIMIT 1;", $mysql);
+                    $cidrow = get_one_row("SELECT id, domain, last FROM trackers WHERE ubid = '".$data_ubid."' AND agent_id IS NULL ORDER BY last_seen DESC LIMIT 1;", $mysql);
                 }
                 $cidregenerate = true;
                 if($cidrow != null) {
@@ -508,27 +510,27 @@ class b1_analytics {
                     }
                 }
                 if($cidregenerate == false) {
-                    setcookie("b1cid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
-                    $mysql->query("UPDATE clientids SET last = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
+                    setcookie("b1id", $cidrow[0], time()+60*60*24*180, "/", $this->d);
+                    $mysql->query("UPDATE trackers SET last_seen = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
                 } else {
-                    $mysql->query("DELETE FROM clientids WHERE ubid = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
-                    $this->exgenquery($mysql, "clientids", array("domain" => $this->d, "ubid" => $data_ubid, "agent_id" => $this->agent_id), $cid);
-                    setcookie("b1cid", $cid, time()+60*60*24*180, "/", $this->d);
+                    $mysql->query("DELETE FROM trackers WHERE ubid = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
+                    $this->exgenquery($mysql, "trackers", array("domain" => $this->d, "ubid" => $data_ubid, "agent_id" => $this->agent_id), $cid);
+                    setcookie("b1id", $cid, time()+60*60*24*180, "/", $this->d);
                 }
                 $this->ubid = $data_ubid;
-                $mysql->query("UPDATE uniquebrowsers SET last = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
+                $mysql->query("UPDATE browsers SET last_update = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
             } else {
-                $this->user_ubid = $this->generateid(15);
-                $this->exgenquery($mysql, "clientids", array("domain" => $this->d, "ubid" => $this->ubid, "agent_id" => $this->agent_id), $cid);
-                setcookie("trkcid", $cid, time()+60*60*24*180, "/", $this->d);
-                $this->exgenquery($mysql, "uniquebrowsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
+                $this->ubid = $this->generateid(15);
+                $this->exgenquery($mysql, "trackers", array("domain" => $this->d, "ubid" => $this->ubid, "agent_id" => $this->agent_id), $cid);
+                setcookie("b1id", $cid, time()+60*60*24*180, "/", $this->d);
+                $this->exgenquery($mysql, "browsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
             }
         }
     }
     
     // Gets information about the request and adds it to the database
     function getrequest($mysql) {
-        $mysql->query("CREATE TABLE IF NOT EXISTS `requests` (id VARCHAR(15) PRIMARY KEY, accept TEXT, protocol TEXT, port INT(6), host VARCHAR(253), uri TEXT, referrer TEXT, visitor_ip VARCHAR(45) NOT NULL, visitor_country VARCHAR(2), cf_ray_id TEXT, browser_id VARCHAR(15), network_id VARCHAR(15), created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $mysql->query("CREATE TABLE IF NOT EXISTS `requests` (id VARCHAR(15) PRIMARY KEY, accept TEXT, protocol TEXT, port INT(6), host VARCHAR(253), uri TEXT, referrer TEXT, visitor_ip VARCHAR(45) NOT NULL, visitor_country VARCHAR(2), cf_ray_id TEXT, browser_id VARCHAR(15), network_id VARCHAR(15), `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         $this->r_protocol = isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null;
         $this->r_port = isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null;
         $this->r_rayid = isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null;
@@ -589,8 +591,8 @@ class b1_analytics {
     
     // Writes the javascript/HTML5 script
     function echoscript() {
-        echo "
-        <script>
+        echo 
+        "<script>
             var b1d = new Date();
             b1d.setTime(trkd.getTime() + (180*24*60*60*1000));
             var b1expires = \"expires=\"+b1d.toUTCString();
@@ -617,8 +619,7 @@ class b1_analytics {
                     document.cookie = \"geolocation=\" + JSON.stringify(location) + \"; \" + b1expires + \"; path=/; domain=".$this->d."\";
                 });
             }
-        </script>
-        ";
+        </script>";
     }
 }
 ?>
