@@ -12,6 +12,7 @@
 class b1_analytics {
     public $a = array();
     public $s = null;
+    public $h = null;
     public $d = null;
     public $bot_name = null;
     public $agent_id = null;
@@ -298,8 +299,6 @@ class b1_analytics {
     
     // Gets user language and country from hostname and http header
     function getlocation() {
-        $this->u_ip = $this->s['REMOTE_ADDR'];
-        $this->u_host = gethostbyaddr($this->u_ip);
         if(filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
             $domainparts = explode(".", $this->u_host);
             $domainend = $domainparts[count($domainparts) - 1];
@@ -311,9 +310,7 @@ class b1_analytics {
                 $this->u_country_code = $this->s["HTTP_CF_IPCOUNTRY"];
             }
         }
-        if(isset($this->s["HTTP_ACCEPT_LANGUAGE"])) {
-            $this->u_language = substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2);
-        }
+        $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : false;
     }
     
     // Anonymizes the ip adress
@@ -330,7 +327,7 @@ class b1_analytics {
     function getisp($mysql) {
         $mysql->query("CREATE TABLE IF NOT EXISTS `isps` (id VARCHAR(10) PRIMARY KEY, domain VARCHAR(127) NOT NULL, name TEXT, country VARCHAR(2), last TIMESTAMP NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         $ispdomain = null;
-        if(filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
+        if(isset($this->u_host) && filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
             $domainparts = explode(".", $this->u_host);
             $ispdomain = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
         }
@@ -532,13 +529,9 @@ class b1_analytics {
     // Gets information about the request and adds it to the database
     function getrequest($mysql) {
         $mysql->query("CREATE TABLE IF NOT EXISTS `requests` (id VARCHAR(15) PRIMARY KEY, accept TEXT, protocol TEXT, port INT(6), host VARCHAR(253), uri TEXT, referrer TEXT, visitor_ip VARCHAR(45) NOT NULL, visitor_country VARCHAR(2), cf_ray_id TEXT, browser_id VARCHAR(15), network_id VARCHAR(15), created TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-        if(isset($this->s['REQUEST_SCHEME'])) {
-            $this->r_protocol = $this->s["REQUEST_SCHEME"];
-        }
-        $this->r_port = $this->s['SERVER_PORT'];
-        if(isset($this->s["HTTP_CF_RAY"])) {
-            $this->r_rayid = $this->s["HTTP_CF_RAY"];
-        }
+        $this->r_protocol = isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null;
+        $this->r_port = isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null;
+        $this->r_rayid = isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null;
         if(isset($this->s["REQUEST_URI"])) {
             $uri = $this->s["REQUEST_URI"];
             if($uri != null && $uri != "" && $uri != "/") {
@@ -551,11 +544,9 @@ class b1_analytics {
                 $this->r_origin = $origin;
             }
         }
-        if(isset($this->d['HTTP_ACCEPT'])) {
-            $this->r_accept = "".explode(",", $this->s['HTTP_ACCEPT'])[0]."";
-        }
+        $this->r_accept = isset($this->d['HTTP_ACCEPT']) ? "".explode(",", $this->s['HTTP_ACCEPT'])[0]."" : null;
         $this->rid = $this->generateid(15);
-        $this->r_domain = strtolower($this->s["HTTP_HOST"]);
+        $this->r_domain = strtolower($this->h);
         $this->exgenquery($mysql, "requests", array("accept" => $this->r_accept, "protocol" => $this->r_protocol, "port" => $this->r_port, "host" => $this->r_domain, "uri" => $this->r_target, "referrer" => $this->r_origin, "visitor_ip" => $this->u_ip, "visitor_country" => $this->u_country_code, "cf_ray_id" => $this->r_rayid, "browser_id" => $this->ubid, "network_id" => $this->unid), $this->rid);
     }
     
@@ -565,20 +556,25 @@ class b1_analytics {
     function __construct($mysql, $server, $clientcookies, $anonymousips = TRUE) {
         if(!$mysql->connect_errno) {
             $this->s = $server;
-            if(isset($server['HTTP_USER_AGENT'])) {
-                $this->ua = strtolower($server['HTTP_USER_AGENT']);
-            }
+            $this->ua = isset($this->s['HTTP_USER_AGENT']) ? strtolower($this->s['HTTP_USER_AGENT']) : null;
             $this->c = $clientcookies;
-            $domain = strtolower($server["HTTP_HOST"]);
-            if(filter_var($domain, FILTER_VALIDATE_IP) == false) {
-                $domainparts = explode(".", $domain);
-                $this->d = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
-            } else { $this->d = $domain; }
-            $this->getmobile();
-            $this->getlocation($reader);
-            if($anonymousips) {
+            $this->u_ip = isset($this->s['REMOTE_ADDR']) ? $this->s['REMOTE_ADDR'] : null;
+            if (filter_var($this->u_ip, FILTER_VALIDATE_IP)) {
+                $this->u_host = gethostbyaddr($this->u_ip);
+            }
+            if($anonymousips && isset($this->s['REMOTE_ADDR'])) {
                 $this->anonymize_ip();
             }
+            if(isset($this->s["HTTP_HOST"])) {
+                $this->h = $this->s["HTTP_HOST"];
+                $domain = strtolower($this->h);
+                if(filter_var($domain, FILTER_VALIDATE_IP) == false) {
+                    $domainparts = explode(".", $domain);
+                    $this->d = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
+                } else { $this->d = $domain; }
+            }
+            $this->getmobile();
+            $this->getlocation();
             $this->getisp($mysql);
             $this->getunid($mysql);
             $this->getbot();
@@ -587,7 +583,7 @@ class b1_analytics {
             $this->getubid($mysql);
             $this->getrequest($mysql);
         } else {
-            error_log("beranek1 analytics unable to connect to database\n");
+            error_log("b1 web analytics unable to connect to database\n");
         }
     }
     

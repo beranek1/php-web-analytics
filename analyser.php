@@ -119,7 +119,7 @@ class b1_analyser {
     }
     function analyse_time($mysql, $time = null) {
         $timespan = null;
-        $times = array("24h" => array("start" => "-24 HOUR", "end" => null), "7days" => array("start" => "-7 DAY", "end" => null), "30days" => "30days" => array("start" => "-30 DAY", "end" => null), "365days" => array("start" => "365 DAY", "end" => null));
+        $times = array("24h" => array("start" => "-24 HOUR", "end" => null), "7days" => array("start" => "-7 DAY", "end" => null), "30days" => array("start" => "-30 DAY", "end" => null), "365days" => array("start" => "365 DAY", "end" => null));
         $start = null;
         $end = null;
         if($time != null) {
