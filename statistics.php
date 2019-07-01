@@ -46,6 +46,12 @@ function get_one_row($query, $mysql) {
 }
 $ttlrqtsr = get_one_row("SELECT COUNT(*) FROM requests;", $b1_analytics_db);
 $total_requests = $ttlrqtsr[0];
+if($total_requests == 0) {
+    echo "Not enough data collected yet.<br>";
+    echo "<a href=\"https://beranek1.github.io/webanalytics/\">b1 web analytics</a>";
+    $b1_analytics_db->close();
+    return;
+}
 $ttlvstrsr = get_one_row("SELECT COUNT(*) FROM uniquebrowsers;", $b1_analytics_db);
 $total_visitors = $ttlvstrsr[0];
 $ttlntwsr = get_one_row("SELECT COUNT(*) FROM networks;", $b1_analytics_db);
