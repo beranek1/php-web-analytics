@@ -25,4 +25,9 @@ include "tracker.php";
 
 After collecting enough data you will see a simple report when opening statistics.php.
 
+## Requirements
+* PHP 5.0 or higher
+* a MySQL Server
+* (a webserver of course)
+
 ### PLEASE NOTE: b1 web tracking is still in development. We rely on your reporting of issues as well as donations!
