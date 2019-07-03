@@ -20,4 +20,3 @@ $b1_analytics = new b1_analytics($b1_analytics_db, $_SERVER, $_COOKIE);
 
 // Closes database connection
 $b1_analytics_db->close();
-?>

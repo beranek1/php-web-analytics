@@ -2,5 +2,4 @@
 include "tracker.php";
 
 // Outputs javascript for additional tracking
-$b1_analytics->echoscript();
-?>
+$b1_analytics->echo_script();
