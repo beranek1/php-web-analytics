@@ -9,21 +9,21 @@ There are atleast 4 reasons:
 * **it's free**
 
 ## Usage
-Before using the scripts you need to modify the mysql parameters (host, user, password, database) in database.php else none of the scripts will work:
+Place b1webanalytics.php and b1settings.php in the same directory as your own php scripts.
 
-database.php
+Before using the scripts you need to modify the mysql parameters (user, password, database, host) in b1settings.php else nothing will work:
+
+b1settings.php
 ```php
-// Creates database connection
-// Modify before use
-$b1_analytics_db = new mysqli("localhost", "user", "password", "database");
+$b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
 ```
 
-After that all you need to do is including tracker.php into your website to start collecting data:
+After that all you need to do is including b1webanalytics.php in your own php scripts to start collecting data:
 ```php
-include "tracker.php";
+include "b1webanalytics.php";
 ```
 
-After collecting enough data you will see a simple report when opening statistics.php.
+After collecting enough data you will see a simple report when opening b1statistics.php.
 
 ## Requirements
 * PHP 5.0 or higher

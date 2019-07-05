@@ -12,8 +12,8 @@
 #-----------------------------------------
 */
 
-include "./configs/database.php";
-include "./libraries/analytics.php";
+include "./source/configs/database.php";
+include "./source/libraries/analytics.php";
 
 // Runs analytics
 $b1_analytics = new b1_analytics($b1_analytics_db, $_SERVER, $_COOKIE);
