@@ -30,4 +30,4 @@ After collecting enough data you will see a simple report when opening b1statist
 * a MySQL Server
 * (a webserver of course)
 
-### PLEASE NOTE: b1 web tracking is still in development. We rely on your feedback!
+### PLEASE NOTE: b1 web analytics is still in development. We rely on your feedback!
