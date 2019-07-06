@@ -113,6 +113,15 @@ class web_db_manager {
         return $this->connection->query($query);
     }
 
+    function create_table($name, $keys) {
+        $query = "CREATE TABLE IF NOT EXISTS `".$name."` (";
+        foreach ($keys as $key => $value) {
+            $query .= "`".$key."` ".$value.", ";
+        }
+        $query .= "`time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
+        $this->query($query);
+    }
+
     function connect() {
         $this->connection = new mysqli($this->host, $this->user, $this->password, $this->database);
         if($this->connection->connect_errno) {
@@ -374,7 +383,13 @@ class web_analytics {
     
     // Get ISP's unique id
     function get_isp() {
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `isps` (id VARCHAR(10) PRIMARY KEY, domain VARCHAR(127) NOT NULL, name TEXT, country VARCHAR(2), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $this->db_manager->create_table("isps", array(
+            "id" => "VARCHAR(10) PRIMARY KEY",
+            "domain" => "VARCHAR(127) NOT NULL",
+            "name" => "TEXT",
+            "country" => "VARCHAR(2)",
+            "last_update" => "TIMESTAMP NULL"
+        ));
         $domain = null;
         if(isset($this->u_host) && filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
             $domainparts = explode(".", $this->u_host);
@@ -393,7 +408,14 @@ class web_analytics {
     
     // Get network's unique id
     function get_network() {
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `networks` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45) NOT NULL, host VARCHAR(253), country VARCHAR(2), isp_id VARCHAR(10), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $this->db_manager->create_table("networks", array(
+            "id" => "VARCHAR(15) PRIMARY KEY",
+            "ip" => "VARCHAR(45) NOT NULL",
+            "host" => "VARCHAR(253)",
+            "country" => "VARCHAR(2)",
+            "isp_id" => "VARCHAR(10)",
+            "last_update" => "TIMESTAMP NULL"
+        ));
         if(isset($this->u_ip)) {
             $nrow = $this->db_manager->get_one_row("SELECT id, host FROM networks WHERE ip = '".$this->u_ip."' LIMIT 1;");
             if($nrow != null) {
@@ -410,7 +432,16 @@ class web_analytics {
     
     // Get agent's unique id
     function get_agent() {
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `agents` (id VARCHAR(10) PRIMARY KEY, agent TEXT, browser VARCHAR(40), os VARCHAR(40), device VARCHAR(40), mobile TINYINT(1), bot TINYINT(1), bot_name VARCHAR(30), `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $this->db_manager->create_table("agents", array(
+            "id" => "VARCHAR(10) PRIMARY KEY",
+            "agent" => "TEXT",
+            "browser" => "VARCHAR(40)",
+            "os" => "VARCHAR(40)",
+            "device" => "VARCHAR(40)",
+            "mobile" => "TINYINT(1)",
+            "bot" => "TINYINT(1)",
+            "bot_name" => "VARCHAR(30)"
+        ));
         if($this->ua != null && $this->ua != "") {
             $aidrow = $this->db_manager->get_one_row("SELECT id, browser, os, device FROM agents WHERE agent LIKE '".$this->ua."' LIMIT 1;");
             if($aidrow != null) {
@@ -430,7 +461,17 @@ class web_analytics {
     
     // Use cookies set by tracking script to get device's unique profile id
     function get_profile() {
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `profiles` (id VARCHAR(10) PRIMARY KEY, screen_width INT(9), screen_height VARCHAR(9), interface_width INT(9), interface_height INT(9), color_depth INT(7), pixel_depth INT(7), cookies_enabled TINYINT(1), java_enabled TINYINT(1), `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $this->db_manager->create_table("profiles", array(
+            "id" => "VARCHAR(10) PRIMARY KEY",
+            "screen_width" => "INT(9)",
+            "screen_height" => "VARCHAR(9)",
+            "interface_width" => "INT(9)",
+            "interface_height" => "INT(9)",
+            "color_depth" => "INT(7)",
+            "pixel_depth" => "INT(7)",
+            "cookies_enabled" => "TINYINT(1)",
+            "java_enabled" => "TINYINT(1)"
+        ));
         if(isset($this->c["device_profile"]) && isset($this->c["browser_profile"])) {
             $this->u_profile = array();
             $device_profile = json_decode($this->c["device_profile"], true);
@@ -492,8 +533,24 @@ class web_analytics {
     
     // Identify the user and update information
     function indentify_browser() {
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `trackers` (id VARCHAR(20) PRIMARY KEY, domain TEXT, browser_id VARCHAR(15) NOT NULL, agent_id VARCHAR(10), last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `browsers` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45), country VARCHAR(2), language VARCHAR(2), mobile TINYINT(1), bot TINYINT(1), agent_id VARCHAR(10), network_id VARCHAR(15) NOT NULL, profile_id VARCHAR(10), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $this->db_manager->create_table("trackers", array(
+            "id" => "VARCHAR(20) PRIMARY KEY",
+            "domain" => "TEXT",
+            "browser_id" => "VARCHAR(15) NOT NULL",
+            "agent_id" => "VARCHAR(10)"
+        ));
+        $this->db_manager->create_table("browsers", array(
+            "id" => "VARCHAR(15) PRIMARY KEY",
+            "ip" => "VARCHAR(45)",
+            "country" => "VARCHAR(2)",
+            "language" => "VARCHAR(2)",
+            "mobile" => "TINYINT(1)",
+            "bot" => "TINYINT(1)",
+            "agent_id" => "VARCHAR(10)",
+            "network_id" => "VARCHAR(15) NOT NULL",
+            "profile_id" => "VARCHAR(10)",
+            "last_update" => "TIMESTAMP NULL"
+        ));
         if(isset($this->unid)) {
             $identified = false;
             if(isset($this->c["webid"])) {
@@ -501,7 +558,7 @@ class web_analytics {
                 if(strlen($cookie_cid) == 20) {
                     $cidrow = $this->db_manager->get_one_row("SELECT browser_id FROM trackers WHERE id = '".$cookie_cid."' AND domain = '".$this->d."' LIMIT 1;");
                     if($cidrow != null) {
-                        $this->db_manager->query("UPDATE trackers SET last_seen = '".date('Y-m-d H:i:s')."' WHERE id = '".$cookie_cid."';");
+                        $this->db_manager->query("UPDATE trackers SET time = '".date('Y-m-d H:i:s')."' WHERE id = '".$cookie_cid."';");
                         $row = $this->db_manager->get_one_row("SELECT ip, network_id FROM browsers WHERE id = '".$cidrow[0]."' LIMIT 1;");
                         if($row != null) {
                             setcookie("webid", $cookie_cid, time()+60*60*24*180, "/", $this->d);
@@ -549,9 +606,9 @@ class web_analytics {
                 if($ubid_count == 1) {
                     $cidrow = null;
                     if($this->agent_id != null) {
-                        $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY last_seen DESC LIMIT 1;");
+                        $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY time DESC LIMIT 1;");
                     } else {
-                        $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id IS NULL ORDER BY last_seen DESC LIMIT 1;");
+                        $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id IS NULL ORDER BY time DESC LIMIT 1;");
                     }
                     $cidregenerate = true;
                     if($cidrow != null) {
@@ -561,7 +618,7 @@ class web_analytics {
                     }
                     if($cidregenerate == false) {
                         setcookie("webid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
-                        $this->db_manager->query("UPDATE trackers SET last_seen = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
+                        $this->db_manager->query("UPDATE trackers SET time = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
                     } else {
                         $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
                         $this->db_manager->ex_gen_query($mysql, "trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
@@ -581,7 +638,20 @@ class web_analytics {
     
     // Get information about the request and add it to the database
     function save_request() {
-        $this->db_manager->query("CREATE TABLE IF NOT EXISTS `requests` (id VARCHAR(15) PRIMARY KEY, accept TEXT, protocol TEXT, port INT(6), host VARCHAR(253), uri TEXT, referrer TEXT, visitor_ip VARCHAR(45), visitor_country VARCHAR(2), cf_ray_id TEXT, browser_id VARCHAR(15), network_id VARCHAR(15), `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
+        $this->db_manager->create_table("requests", array(
+            "id" => "VARCHAR(15) PRIMARY KEY",
+            "accept" => "TEXT",
+            "protocol" => "TEXT",
+            "port" => "INT(6)",
+            "host" => "VARCHAR(253)",
+            "uri" => "TEXT",
+            "referrer" => "TEXT",
+            "visitor_ip" => "VARCHAR(45)",
+            "visitor_country" => "VARCHAR(2)",
+            "cf_ray_id" => "TEXT",
+            "browser_id" => "VARCHAR(15)",
+            "network_id" => "VARCHAR(15)"
+        ));
         $this->r_protocol = isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null;
         $this->r_port = isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null;
         $this->r_rayid = isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null;

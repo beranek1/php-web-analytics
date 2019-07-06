@@ -314,6 +314,15 @@ class web_db_manager {
         return $this->connection->query($query);
     }
 
+    function create_table($name, $keys) {
+        $query = "CREATE TABLE IF NOT EXISTS `".$name."` (";
+        foreach ($keys as $key => $value) {
+            $query .= "`".$key."` ".$value.", ";
+        }
+        $query .= "`time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
+        $this->query($query);
+    }
+
     function connect() {
         $this->connection = new mysqli($this->host, $this->user, $this->password, $this->database);
         if($this->connection->connect_errno) {
