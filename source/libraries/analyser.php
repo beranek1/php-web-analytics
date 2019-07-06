@@ -1,7 +1,7 @@
 <?php
 /*
 #-----------------------------------------
-| b1 web analytics: analyser
+| web analytics: analyser
 | https://beranek1.github.io/webanalytics/
 #-----------------------------------------
 | made by beranek1
@@ -9,7 +9,7 @@
 #-----------------------------------------
 */
 
-class b1_analyser {
+class web_analyser {
     private $db_manager = null;
     public $total_requests = null;
     public $total_visitors = null;

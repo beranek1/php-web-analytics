@@ -1,7 +1,7 @@
 <?php
 /*
 #-----------------------------------------
-| b1 web analytics: statistics viewer
+| web analytics: statistics viewer
 | https://beranek1.github.io/webanalytics/
 #-----------------------------------------
 | made by beranek1
@@ -12,10 +12,10 @@
 /*
 # Settings
 */
-$b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
-$b1_auto_run = TRUE;
+$web_analytics_db = new web_db_manager("user", "password", "database", "localhost");
+$web_auto_run = TRUE;
 
-include "b1settings.php";
+include "websettings.php";
 
 /*
 # Source
@@ -23,22 +23,22 @@ include "b1settings.php";
 
 $country_to_continent = array ("AD"=>"EU","AE"=>"AS","AF"=>"AS","AG"=>"NA","AI"=>"NA","AL"=>"EU","AM"=>"AS","AN"=>"NA","AO"=>"AF","AP"=>"AS","AR"=>"SA","AS"=>"OC","AT"=>"EU","AU"=>"OC","AW"=>"NA","AX"=>"EU","AZ"=>"AS","BA"=>"EU","BB"=>"NA","BD"=>"AS","BE"=>"EU","BF"=>"AF","BG"=>"EU","BH"=>"AS","BI"=>"AF","BJ"=>"AF","BL"=>"NA","BM"=>"NA","BN"=>"AS","BO"=>"SA","BR"=>"SA","BS"=>"NA","BT"=>"AS","BV"=>"AN","BW"=>"AF","BY"=>"EU","BZ"=>"NA","CA"=>"NA","CC"=>"AS","CD"=>"AF","CF"=>"AF","CG"=>"AF","CH"=>"EU","CI"=>"AF","CK"=>"OC","CL"=>"SA","CM"=>"AF","CN"=>"AS","CO"=>"SA","CR,NA","CU"=>"NA","CV"=>"AF","CX"=>"AS","CY"=>"AS","CZ"=>"EU","DE"=>"EU","DJ"=>"AF","DK"=>"EU","DM"=>"NA","DO"=>"NA","DZ"=>"AF","EC"=>"SA","EE"=>"EU","EG"=>"AF","EH"=>"AF","ER"=>"AF","ES"=>"EU","ET"=>"AF","EU"=>"EU","FI"=>"EU","FJ"=>"OC","FK"=>"SA","FM"=>"OC","FO"=>"EU","FR"=>"EU","FX"=>"EU","GA"=>"AF","GB"=>"EU","GD"=>"NA","GE"=>"AS","GF"=>"SA","GG"=>"EU","GH"=>"AF","GI"=>"EU","GL"=>"NA","GM"=>"AF","GN"=>"AF","GP"=>"NA","GQ"=>"AF","GR"=>"EU","GS"=>"AN","GT"=>"NA","GU"=>"OC","GW"=>"AF","GY"=>"SA","HK"=>"AS","HM"=>"AN","HN"=>"NA","HR"=>"EU","HT"=>"NA","HU"=>"EU","ID"=>"AS","IE"=>"EU","IL"=>"AS","IM"=>"EU","IN"=>"AS","IO"=>"AS","IQ"=>"AS","IR"=>"AS","IS"=>"EU","IT"=>"EU","JE"=>"EU","JM"=>"NA","JO"=>"AS","JP"=>"AS","KE"=>"AF","KG"=>"AS","KH"=>"AS","KI"=>"OC","KM"=>"AF","KN"=>"NA","KP"=>"AS","KR"=>"AS","KW"=>"AS","KY"=>"NA","KZ"=>"AS","LA"=>"AS","LB"=>"AS","LC"=>"NA","LI"=>"EU","LK"=>"AS","LR"=>"AF","LS"=>"AF","LT"=>"EU","LU"=>"EU","LV"=>"EU","LY"=>"AF","MA"=>"AF","MC"=>"EU","MD"=>"EU","ME"=>"EU","MF"=>"NA","MG"=>"AF","MH"=>"OC","MK"=>"EU","ML"=>"AF","MM"=>"AS","MN"=>"AS","MO"=>"AS","MP"=>"OC","MQ"=>"NA","MR"=>"AF","MS"=>"NA","MT"=>"EU","MU"=>"AF","MV"=>"AS","MW"=>"AF","MX"=>"NA","MY"=>"AS","MZ"=>"AF","NA"=>"AF","NC"=>"OC","NE"=>"AF","NF"=>"OC","NG"=>"AF","NI"=>"NA","NL"=>"EU","NO"=>"EU","NP"=>"AS","NR"=>"OC","NU"=>"OC","NZ"=>"OC","OM"=>"AS","PA"=>"NA","PE"=>"SA","PF"=>"OC","PG"=>"OC","PH"=>"AS","PK"=>"AS","PL"=>"EU","PM"=>"NA","PN"=>"OC","PR"=>"NA","PS"=>"AS","PT"=>"EU","PW"=>"OC","PY"=>"SA","QA"=>"AS","RE"=>"AF","RO"=>"EU","RS"=>"EU","RU"=>"EU","RW"=>"AF","SA"=>"AS","SB"=>"OC","SC"=>"AF","SD"=>"AF","SE"=>"EU","SG"=>"AS","SH"=>"AF","SI"=>"EU","SJ"=>"EU","SK"=>"EU","SL"=>"AF","SM"=>"EU","SN"=>"AF","SO"=>"AF","SR"=>"SA","ST"=>"AF","SV"=>"NA","SY"=>"AS","SZ"=>"AF","TC"=>"NA","TD"=>"AF","TF"=>"AN","TG"=>"AF","TH"=>"AS","TJ"=>"AS","TK"=>"OC","TL"=>"AS","TM"=>"AS","TN"=>"AF","TO"=>"OC","TR"=>"EU","TT"=>"NA","TV"=>"OC","TW"=>"AS","TZ"=>"AF","UA"=>"EU","UG"=>"AF","UM"=>"OC","US"=>"NA","UY"=>"SA","UZ"=>"AS","VA"=>"EU","VC"=>"NA","VE"=>"SA","VG"=>"NA","VI"=>"NA","VN"=>"AS","VU"=>"OC","WF"=>"OC","WS"=>"OC","YE"=>"AS","YT"=>"AF","ZA"=>"AF","ZM"=>"AF","ZW"=>"AF");
 
-$b1_analytics_db->connect();
-$ttlrqtsr = $b1_analytics_db->get_one_row("SELECT COUNT(*) FROM requests;");
+$web_analytics_db->connect();
+$ttlrqtsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM requests;");
 $total_requests = $ttlrqtsr[0];
 if($total_requests == 0) {
     echo "Not enough data collected yet.<br>";
-    echo "<a href=\"https://beranek1.github.io/webanalytics/\">b1 web analytics</a>";
-    $b1_analytics_db->close();
+    echo "<a href=\"https://beranek1.github.io/webanalytics/\">web web analytics</a>";
+    $web_analytics_db->close();
     return;
 }
-$ttlvstrsr = $b1_analytics_db->get_one_row("SELECT COUNT(*) FROM browsers;");
+$ttlvstrsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM browsers;");
 $total_visitors = $ttlvstrsr[0];
-$ttlntwsr = $b1_analytics_db->get_one_row("SELECT COUNT(*) FROM networks;");
+$ttlntwsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM networks;");
 $total_networks = $ttlntwsr[0];
-$ttlispsr = $b1_analytics_db->get_one_row("SELECT COUNT(*) FROM isps;");
+$ttlispsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM isps;");
 $total_isps = $ttlispsr[0];
-$mstrqstsr = $b1_analytics_db->get_rows_array("SELECT `visitor_country`, COUNT(*) FROM requests GROUP BY `visitor_country` ORDER BY COUNT(*) DESC;");
+$mstrqstsr = $web_analytics_db->get_rows_array("SELECT `visitor_country`, COUNT(*) FROM requests GROUP BY `visitor_country` ORDER BY COUNT(*) DESC;");
 $top_countries = array();
 $top_continents = array();
 $total_continents = 0;
@@ -57,7 +57,7 @@ foreach($mstrqstsr as $country) {
 }
 arsort($top_continents);
 $total_countries = 0;
-$tpvstrsor = $b1_analytics_db->get_rows_array("SELECT `country`, COUNT(*) FROM browsers GROUP BY `country` ORDER BY COUNT(*) DESC;");
+$tpvstrsor = $web_analytics_db->get_rows_array("SELECT `country`, COUNT(*) FROM browsers GROUP BY `country` ORDER BY COUNT(*) DESC;");
 $top_countriesvo = array();
 foreach($tpvstrsor as $country) {
     if($country[0] != "" && $country[0] != null) {
@@ -67,7 +67,7 @@ foreach($tpvstrsor as $country) {
         $top_countriesvo["?"] = $country[1];
     }
 }
-$tplngsr = $b1_analytics_db->get_rows_array("SELECT `language`, COUNT(*) FROM browsers GROUP BY `language` ORDER BY COUNT(*) DESC;");
+$tplngsr = $web_analytics_db->get_rows_array("SELECT `language`, COUNT(*) FROM browsers GROUP BY `language` ORDER BY COUNT(*) DESC;");
 $top_languages = array();
 $total_languages = 0;
 foreach($tplngsr as $language) {
@@ -78,17 +78,17 @@ foreach($tplngsr as $language) {
         $top_languages["?"] = $language[1];
     }
 }
-$tpusragntsr = $b1_analytics_db->get_rows_array("SELECT `agent_id`, COUNT(*) FROM browsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;");
+$tpusragntsr = $web_analytics_db->get_rows_array("SELECT `agent_id`, COUNT(*) FROM browsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;");
 $top_useragents = array();
 foreach($tpusragntsr as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];
 }
-$tpispsr = $b1_analytics_db->get_rows_array("SELECT `isp_id`, COUNT(*) FROM networks GROUP BY `isp_id` ORDER BY COUNT(*) DESC;");
+$tpispsr = $web_analytics_db->get_rows_array("SELECT `isp_id`, COUNT(*) FROM networks GROUP BY `isp_id` ORDER BY COUNT(*) DESC;");
 $top_isps = array();
 foreach($tpispsr as $isp) {
     $top_isps[$isp[0]] = $isp[1];
 }
-$tpurir = $b1_analytics_db->get_rows_array("SELECT `uri`, COUNT(*) FROM requests GROUP BY `uri` ORDER BY COUNT(*) DESC;");
+$tpurir = $web_analytics_db->get_rows_array("SELECT `uri`, COUNT(*) FROM requests GROUP BY `uri` ORDER BY COUNT(*) DESC;");
 $top_uris = array();
 foreach($tpurir as $uri) {
     $top_uris[$uri[0]] = $uri[1];
@@ -97,7 +97,7 @@ foreach($tpurir as $uri) {
 <html>
 <head>
 <meta name="robots" content="noindex,nofollow">
-<title>b1 web analytics</title>
+<title>web web analytics</title>
 <style>
 body {
     font-family: arial, sans-serif;
@@ -227,16 +227,16 @@ progress {
     </div>
 </body>
 <footer>
-    <a href="https://beranek1.github.io/webanalytics/">Powered by b1 web analytics</a>
+    <a href="https://beranek1.github.io/webanalytics/">Powered by web web analytics</a>
 </footer>
 </html>
 <?php
-$b1_analytics_db->close();
+$web_analytics_db->close();
 
 /* Classes */
 
-// b1 database manager
-class b1_db_manager {
+// web database manager
+class web_db_manager {
     public $connected = false;
     private $connection = null;
     private $user = null;

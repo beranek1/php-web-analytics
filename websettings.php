@@ -1,7 +1,7 @@
 <?php
 /*
 #-----------------------------------------
-| b1 web analytics: settings
+| web analytics settings
 | https://beranek1.github.io/webanalytics/
 #-----------------------------------------
 | made by beranek1
@@ -9,5 +9,5 @@
 #-----------------------------------------
 */
 
-$b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
-$b1_auto_run = TRUE;
+$web_analytics_db = new web_db_manager("user", "password", "database", "localhost");
+$web_auto_run = TRUE;

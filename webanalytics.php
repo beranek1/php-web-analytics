@@ -1,7 +1,7 @@
 <?php
 /*
 #-----------------------------------------
-| b1 web analytics
+| web analytics
 | https://beranek1.github.io/webanalytics/
 #-----------------------------------------
 | made by beranek1
@@ -12,30 +12,30 @@
 /*
 # Settings
 */
-$b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
-$b1_auto_run = TRUE;
+$web_analytics_db = new web_db_manager("user", "password", "database", "localhost");
+$web_auto_run = TRUE;
 
-include "b1settings.php";
+include "websettings.php";
 
 /*
 # Source
 */
 
-if($b1_auto_run) {
+if($web_auto_run) {
 // Connect to database
-$b1_analytics_db->connect();
+$web_analytics_db->connect();
 
 // Runs analytics
-$b1_analytics = new b1_analytics($b1_analytics_db, $_SERVER, $_COOKIE);
+$web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
 
 // Closes database connection
-$b1_analytics_db->close();
+$web_analytics_db->close();
 }
 
 /* Classes */
 
-// b1 database manager
-class b1_db_manager {
+// web analytics database manager
+class web_db_manager {
     public $connected = false;
     private $connection = null;
     private $user = null;
@@ -138,9 +138,9 @@ class b1_db_manager {
     } 
 }
 
-// b1 analytics
+// web analytics
 
-class b1_analytics {
+class web_analytics {
     private $db_manager = null;
     private $s = null;
     private $h = null;
@@ -496,15 +496,15 @@ class b1_analytics {
         $this->db_manager->query("CREATE TABLE IF NOT EXISTS `browsers` (id VARCHAR(15) PRIMARY KEY, ip VARCHAR(45), country VARCHAR(2), language VARCHAR(2), mobile TINYINT(1), bot TINYINT(1), agent_id VARCHAR(10), network_id VARCHAR(15) NOT NULL, profile_id VARCHAR(10), last_update TIMESTAMP NULL, `time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);");
         if(isset($this->unid)) {
             $identified = false;
-            if(isset($this->c["b1id"])) {
-                $cookie_cid = $this->c["b1id"];
+            if(isset($this->c["webid"])) {
+                $cookie_cid = $this->c["webid"];
                 if(strlen($cookie_cid) == 20) {
                     $cidrow = $this->db_manager->get_one_row("SELECT browser_id FROM trackers WHERE id = '".$cookie_cid."' AND domain = '".$this->d."' LIMIT 1;");
                     if($cidrow != null) {
                         $this->db_manager->query("UPDATE trackers SET last_seen = '".date('Y-m-d H:i:s')."' WHERE id = '".$cookie_cid."';");
                         $row = $this->db_manager->get_one_row("SELECT ip, network_id FROM browsers WHERE id = '".$cidrow[0]."' LIMIT 1;");
                         if($row != null) {
-                            setcookie("b1id", $cookie_cid, time()+60*60*24*180, "/", $this->d);
+                            setcookie("webid", $cookie_cid, time()+60*60*24*180, "/", $this->d);
                             $this->ubid = $cidrow[0];
                             if($this->u_ip != $row[0] && $this->u_ip != null && $this->u_ip != "") {
                                 $this->db_manager->query("UPDATE browsers SET ip = '".$this->u_ip."' WHERE id = '".$this->ubid."';");
@@ -560,19 +560,19 @@ class b1_analytics {
                         }
                     }
                     if($cidregenerate == false) {
-                        setcookie("b1id", $cidrow[0], time()+60*60*24*180, "/", $this->d);
+                        setcookie("webid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
                         $this->db_manager->query("UPDATE trackers SET last_seen = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
                     } else {
                         $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
                         $this->db_manager->ex_gen_query($mysql, "trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
-                        setcookie("b1id", $cid, time()+60*60*24*180, "/", $this->d);
+                        setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
                     }
                     $this->ubid = $data_ubid;
                     $this->db_manager->query("UPDATE browsers SET last_update = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
                 } else {
                     $this->ubid = $this->db_manager->generate_id(15);
                     $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $this->ubid, "agent_id" => $this->agent_id), $cid);
-                    setcookie("b1id", $cid, time()+60*60*24*180, "/", $this->d);
+                    setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
                     $this->db_manager->ex_gen_query("browsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
                 }
             }
@@ -603,8 +603,8 @@ class b1_analytics {
         $this->db_manager->ex_gen_query("requests", array("accept" => $this->r_accept, "protocol" => $this->r_protocol, "port" => $this->r_port, "host" => $this->r_domain, "uri" => $this->r_target, "referrer" => $this->r_origin, "visitor_ip" => $this->u_ip, "visitor_country" => $this->u_country_code, "cf_ray_id" => $this->r_rayid, "browser_id" => $this->ubid, "network_id" => $this->unid), $this->rid);
     }
     
-    // Construct: b1_analytics({mysql}, $_SERVER, $_COOKIE)
-    // If you don't want to anonymize ip adresses: b1_analytics({mysql}, $_SERVER, $_COOKIE, FALSE)
+    // Construct: web_analytics({db_manager}, $_SERVER, $_COOKIE)
+    // If you don't want to anonymize ip adresses: web_analytics({db_manager}, $_SERVER, $_COOKIE, FALSE)
     // Please remember to write a privacy policy especially if you don't anonymize ip adresses and live in the EU.
     function __construct($db_manager, $server, $clientcookies, $anonymousips = TRUE) {
         if($db_manager->connected) {
@@ -637,7 +637,7 @@ class b1_analytics {
             $this->indentify_browser();
             $this->save_request();
         } else {
-            error_log("b1 web analytics unable to connect to database\n");
+            error_log("web analytics unable to connect to database\n");
         }
     }
     
@@ -645,30 +645,30 @@ class b1_analytics {
     function echo_script() {
         echo 
         "<script>
-            var b1d = new Date();
-            b1d.setTime(trkd.getTime() + (180*24*60*60*1000));
-            var b1expires = \"expires=\"+b1d.toUTCString();
-            var b1device = {};
-            b1device.screen_width = screen.width;
-            b1device.screen_height = screen.height;
-            b1device.interface_width = (screen.width - screen.availWidth);
-            b1device.interface_height = (screen.height - screen.availHeight);
-            b1device.color_depth = screen.colorDepth;
-            b1device.pixel_depth = screen.pixelDepth;
-            document.cookie = \"device_profile=\" + JSON.stringify(b1device) + \"; \" + b1expires + \"; path=/; domain=".$this->d."\";
-            var b1browser = {};
-            b1browser.interface_width = (window.outerWidth - window.innerWidth);
-            b1browser.interface_height = (window.outerHeight - window.innerHeight);
-            b1browser.cookies_enabled = navigator.cookieEnabled;
-            b1browser.java_enabled = navigator.javaEnabled();
-            document.cookie = \"browser_profile=\" + JSON.stringify(b1browser) + \"; \" + b1expires + \"; path=/; domain=".$this->d."\";
+            var d = new Date();
+            d.setTime(d.getTime() + (180*24*60*60*1000));
+            var expires = \"expires=\"+d.toUTCString();
+            var device = {};
+            device.screen_width = screen.width;
+            device.screen_height = screen.height;
+            device.interface_width = (screen.width - screen.availWidth);
+            device.interface_height = (screen.height - screen.availHeight);
+            device.color_depth = screen.colorDepth;
+            device.pixel_depth = screen.pixelDepth;
+            document.cookie = \"device_profile=\" + JSON.stringify(device) + \"; \" + expires + \"; path=/; domain=".$this->d."\";
+            var browser = {};
+            browser.interface_width = (window.outerWidth - window.innerWidth);
+            browser.interface_height = (window.outerHeight - window.innerHeight);
+            browser.cookies_enabled = navigator.cookieEnabled;
+            browser.java_enabled = navigator.javaEnabled();
+            document.cookie = \"browser_profile=\" + JSON.stringify(browser) + \"; \" + expires + \"; path=/; domain=".$this->d."\";
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function (position) {
                     var location = {};
                     location.latitude = position.coords.latitude;
                     location.longitude = position.coords.longitude;
                     location.altitude = position.coords.altitude;
-                    document.cookie = \"geolocation=\" + JSON.stringify(location) + \"; \" + b1expires + \"; path=/; domain=".$this->d."\";
+                    document.cookie = \"geolocation=\" + JSON.stringify(location) + \"; \" + expires + \"; path=/; domain=".$this->d."\";
                 });
             }
         </script>";
