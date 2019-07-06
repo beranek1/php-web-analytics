@@ -25,6 +25,11 @@ include "b1webanalytics.php";
 
 After collecting enough data you will see a simple report when opening b1statistics.php.
 
+Interested in using b1 web analytics as a library or in a modified way? You can disable auto run in the settings:
+```php
+$b1_auto_run = FALSE;
+```
+
 ## Requirements
 * PHP 5.0 or higher
 * a MySQL Server

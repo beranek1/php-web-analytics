@@ -10,3 +10,4 @@
 */
 
 $b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
+$b1_auto_run = TRUE;

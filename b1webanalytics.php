@@ -12,21 +12,25 @@
 /*
 # Settings
 */
+$b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
+$b1_auto_run = TRUE;
 
-// Set backup settings when including of b1settings.php fails
-if((include "b1settings.php") == FALSE) {
-    $b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
-}
+include "b1settings.php";
 
 /*
 # Source
 */
+
+if($b1_auto_run) {
+// Connect to database
+$b1_analytics_db->connect();
 
 // Runs analytics
 $b1_analytics = new b1_analytics($b1_analytics_db, $_SERVER, $_COOKIE);
 
 // Closes database connection
 $b1_analytics_db->close();
+}
 
 /* Classes */
 
@@ -131,7 +135,6 @@ class b1_db_manager {
         $this->database = $database;
         $this->host = $host;
         $this->type = $type;
-        $this->connect();
     } 
 }
 
