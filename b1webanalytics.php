@@ -9,7 +9,14 @@
 #-----------------------------------------
 */
 
-include "b1settings.php";
+/*
+# Settings
+*/
+
+// Set backup settings when including of b1settings.php fails
+if((include "b1settings.php") == FALSE) {
+    $b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
+}
 
 /*
 # Source

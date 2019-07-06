@@ -9,11 +9,11 @@ There are atleast 4 reasons:
 * **it's free**
 
 ## Usage
-Place b1webanalytics.php and b1settings.php in the same directory as your own php scripts.
+Place b1webanalytics.php and b1settings.php in the same directory as your own php scripts, and modify the mysql parameters (user, password, database, host) in b1settings.php. (Recommended, makes updates easier)
+OR
+Place only b1webanalytics in the same directory as your own php scripts and modify the mysql parameters (user, password, database, host) in b1webanalytics.php.
 
-Before using the scripts you need to modify the mysql parameters (user, password, database, host) in b1settings.php else nothing will work:
-
-b1settings.php
+b1settings.php / b1webanalytics.php
 ```php
 $b1_analytics_db = new b1_db_manager("user", "password", "database", "localhost");
 ```
