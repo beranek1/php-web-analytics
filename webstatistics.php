@@ -1,8 +1,8 @@
 <?php
 /*
 #-----------------------------------------
-| web analytics: statistics viewer
-| https://beranek1.github.io/webanalytics/
+| WebAnalytics: Statistics
+| https://webanalytics.one
 #-----------------------------------------
 | made by beranek1
 | https://github.com/beranek1
@@ -28,7 +28,7 @@ $ttlrqtsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM requests;");
 $total_requests = $ttlrqtsr[0];
 if($total_requests == 0) {
     echo "Not enough data collected yet.<br>";
-    echo "<a href=\"https://beranek1.github.io/webanalytics/\">web analytics</a>";
+    echo "<a href=\"https://webanalytics.one\">WebAnalytics</a>";
     $web_analytics_db->close();
     return;
 }
@@ -97,7 +97,7 @@ foreach($tpurir as $uri) {
 <html>
 <head>
 <meta name="robots" content="noindex,nofollow">
-<title>web analytics</title>
+<title>WebAnalytics: Statistics</title>
 <style>
 body {
     font-family: arial, sans-serif;
@@ -227,7 +227,7 @@ progress {
     </div>
 </body>
 <footer>
-    <a href="https://beranek1.github.io/webanalytics/">Powered by web analytics</a>
+    <a href="https://webanalytics.one">Powered by WebAnalytics</a>
 </footer>
 </html>
 <?php
@@ -235,7 +235,7 @@ $web_analytics_db->close();
 
 /* Classes */
 
-// web database manager
+// WebAnalytics database manager
 class web_db_manager {
     public $connected = false;
     private $connection = null;

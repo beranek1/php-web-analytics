@@ -1,8 +1,8 @@
 <?php
 /*
 #-----------------------------------------
-| web analytics: analyser
-| https://beranek1.github.io/webanalytics/
+| WebAnalytics: Analyser
+| https://webanalytics.one
 #-----------------------------------------
 | made by beranek1
 | https://github.com/beranek1

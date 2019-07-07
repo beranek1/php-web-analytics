@@ -1,8 +1,8 @@
 <?php
 /*
 #-----------------------------------------
-| web analytics
-| https://beranek1.github.io/webanalytics/
+| WebAnalytics
+| https://webanalytics.one
 #-----------------------------------------
 | made by beranek1
 | https://github.com/beranek1
@@ -25,7 +25,7 @@ if($web_auto_run) {
 // Connect to database
 $web_analytics_db->connect();
 
-// Runs analytics
+// Runs WebAnalytics
 $web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
 
 // Closes database connection
@@ -34,7 +34,7 @@ $web_analytics_db->close();
 
 /* Classes */
 
-// web analytics database manager
+// WebAnalytics database manager
 class web_db_manager {
     public $connected = false;
     private $connection = null;
@@ -147,7 +147,7 @@ class web_db_manager {
     } 
 }
 
-// web analytics
+// WebAnalytics
 
 class web_analytics {
     private $db_manager = null;
@@ -709,7 +709,7 @@ class web_analytics {
             $this->indentify_browser();
             $this->save_request();
         } else {
-            error_log("web analytics unable to connect to database\n");
+            error_log("WebAnalytics unable to connect to database\n");
         }
     }
     
