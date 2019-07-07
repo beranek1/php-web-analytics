@@ -28,7 +28,7 @@ $ttlrqtsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM requests;");
 $total_requests = $ttlrqtsr[0];
 if($total_requests == 0) {
     echo "Not enough data collected yet.<br>";
-    echo "<a href=\"https://beranek1.github.io/webanalytics/\">web web analytics</a>";
+    echo "<a href=\"https://beranek1.github.io/webanalytics/\">web analytics</a>";
     $web_analytics_db->close();
     return;
 }
@@ -97,7 +97,7 @@ foreach($tpurir as $uri) {
 <html>
 <head>
 <meta name="robots" content="noindex,nofollow">
-<title>web web analytics</title>
+<title>web analytics</title>
 <style>
 body {
     font-family: arial, sans-serif;
@@ -227,7 +227,7 @@ progress {
     </div>
 </body>
 <footer>
-    <a href="https://beranek1.github.io/webanalytics/">Powered by web web analytics</a>
+    <a href="https://beranek1.github.io/webanalytics/">Powered by web analytics</a>
 </footer>
 </html>
 <?php

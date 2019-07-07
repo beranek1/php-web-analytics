@@ -378,7 +378,7 @@ class web_analytics {
         if(filter_var($this->u_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             $prefix = "ipv6";
         }
-        $this->u_ip = $prefix + "." + md5($this->u_ip);
+        $this->u_ip = $prefix.".".md5($this->u_ip);
     }
     
     // Get ISP's unique id
@@ -392,8 +392,10 @@ class web_analytics {
         ));
         $domain = null;
         if(isset($this->u_host) && filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
-            $domainparts = explode(".", $this->u_host);
-            $domain = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
+            $domain_parts = explode(".", $this->u_host);
+            if(count($domain_parts) >= 2) {
+                $domain = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
+            }
         }
         if($domain != null) {
             $nrow = $this->db_manager->get_one_row("SELECT id FROM isps WHERE domain = '".$domain."' LIMIT 1;");
@@ -621,7 +623,7 @@ class web_analytics {
                         $this->db_manager->query("UPDATE trackers SET time = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
                     } else {
                         $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
-                        $this->db_manager->ex_gen_query($mysql, "trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
+                        $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
                         setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
                     }
                     $this->ubid = $data_ubid;
