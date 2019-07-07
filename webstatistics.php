@@ -32,12 +32,9 @@ if($total_requests == 0) {
     $web_analytics_db->close();
     return;
 }
-$ttlvstrsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM browsers;");
-$total_visitors = $ttlvstrsr[0];
-$ttlntwsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM networks;");
-$total_networks = $ttlntwsr[0];
-$ttlispsr = $web_analytics_db->get_one_row("SELECT COUNT(*) FROM isps;");
-$total_isps = $ttlispsr[0];
+$total_visitors = $web_analytics_db->count("browsers");
+$total_networks = $web_analytics_db->count("networks");
+$total_isps = $web_analytics_db->count("isps");
 $mstrqstsr = $web_analytics_db->get_rows_array("SELECT `visitor_country`, COUNT(*) FROM requests GROUP BY `visitor_country` ORDER BY COUNT(*) DESC;");
 $top_countries = array();
 $top_continents = array();
@@ -245,8 +242,29 @@ class web_db_manager {
     private $host = null;
     private $type = null;
 
-    function get_row_count($query) {
+    function get_filter($filter) {
+        if($filter == null) {
+            return "";
+        }
+        $query = " WHERE ";
+        $i = 1;
+        foreach ($filter as $key => $value) {
+            if(isset($value)) {
+                $query .= "`".$key."` = '".$value."'";
+            } else {
+                $query .= "`".$key."` IS NULL";
+            }
+            if($i != count($filter)) {
+                $query .= " AND ";
+            }
+            $i++;
+        }
+        return $query;
+    }
+
+    function count($table, $filter = null) {
         $count = 0;
+        $query = "SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";";
         $result = $this->connection->query($query);
         if($result instanceof mysqli_result) {
             if($row = $result->fetch_row()) {
@@ -291,21 +309,23 @@ class web_db_manager {
         return $id;
     }
     
-    function generate_query($ary, $id, $field = "id") {
-        $keys = $field;
-        $values = "'".$id."'";
+    function add($table, $ary) {
+        $keys = "";
+        $values = "";
+        $i = 1;
         foreach ($ary as $key => $value) {
             if($value != null) {
-                $keys .= ", ".$key."";
-                $values .= ", '".$value."'";
+                if($i != 1) {
+                    $keys .= ", ";
+                    $values .= ", ";
+                }
+                $keys .= "`".$key."`";
+                $values .= "'".$value."'";
+                $i++;
             }
         }
-        return array("keys" => $keys, "values" => $values);
-    }
-    
-    function ex_gen_query($table, $ary, $id, $field = "id") {
-        $query = $this->generate_query($ary, $id, $field);
-        if(!$this->connection->query("INSERT INTO ".$table." (".$query["keys"].") VALUES (".$query["values"].");")) {
+        $query = "INSERT INTO ".$table." (".$keys.") VALUES (".$values.");";
+        if(!$this->connection->query("INSERT INTO ".$table." (".$keys.") VALUES (".$values.");")) {
             error_log("".$this->connection->error."\n");
         }
     }
@@ -320,7 +340,9 @@ class web_db_manager {
             $query .= "`".$key."` ".$value.", ";
         }
         $query .= "`time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
-        $this->query($query);
+        if(!$this->query($query)) {
+            error_log("".$this->connection->error."\n");
+        }
     }
 
     function update($table, $values, $filter) {
@@ -333,17 +355,10 @@ class web_db_manager {
             }
             $i++;
         }
-        $query .= " WHERE ";
-        $i = 1;
-        foreach ($filter as $key => $value) {
-            $query .= "`".$key."` = '".$value."'";
-            if($i != count($values)) {
-                $query .= " AND ";
-            }
-            $i++;
+        $query .= $this->get_filter($filter).";";
+        if(!$this->query($query)) {
+            error_log("".$this->connection->error."\n");
         }
-        $query .= ";";
-        $this->query($query);
     }
 
     function connect() {

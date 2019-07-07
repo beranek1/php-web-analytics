@@ -44,8 +44,29 @@ class web_db_manager {
     private $host = null;
     private $type = null;
 
-    function get_row_count($query) {
+    function get_filter($filter) {
+        if($filter == null) {
+            return "";
+        }
+        $query = " WHERE ";
+        $i = 1;
+        foreach ($filter as $key => $value) {
+            if(isset($value)) {
+                $query .= "`".$key."` = '".$value."'";
+            } else {
+                $query .= "`".$key."` IS NULL";
+            }
+            if($i != count($filter)) {
+                $query .= " AND ";
+            }
+            $i++;
+        }
+        return $query;
+    }
+
+    function count($table, $filter = null) {
         $count = 0;
+        $query = "SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";";
         $result = $this->connection->query($query);
         if($result instanceof mysqli_result) {
             if($row = $result->fetch_row()) {
@@ -90,21 +111,23 @@ class web_db_manager {
         return $id;
     }
     
-    function generate_query($ary, $id, $field = "id") {
-        $keys = $field;
-        $values = "'".$id."'";
+    function add($table, $ary) {
+        $keys = "";
+        $values = "";
+        $i = 1;
         foreach ($ary as $key => $value) {
             if($value != null) {
-                $keys .= ", ".$key."";
-                $values .= ", '".$value."'";
+                if($i != 1) {
+                    $keys .= ", ";
+                    $values .= ", ";
+                }
+                $keys .= "`".$key."`";
+                $values .= "'".$value."'";
+                $i++;
             }
         }
-        return array("keys" => $keys, "values" => $values);
-    }
-    
-    function ex_gen_query($table, $ary, $id, $field = "id") {
-        $query = $this->generate_query($ary, $id, $field);
-        if(!$this->connection->query("INSERT INTO ".$table." (".$query["keys"].") VALUES (".$query["values"].");")) {
+        $query = "INSERT INTO ".$table." (".$keys.") VALUES (".$values.");";
+        if(!$this->connection->query("INSERT INTO ".$table." (".$keys.") VALUES (".$values.");")) {
             error_log("".$this->connection->error."\n");
         }
     }
@@ -119,7 +142,9 @@ class web_db_manager {
             $query .= "`".$key."` ".$value.", ";
         }
         $query .= "`time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);";
-        $this->query($query);
+        if(!$this->query($query)) {
+            error_log("".$this->connection->error."\n");
+        }
     }
 
     function update($table, $values, $filter) {
@@ -132,17 +157,10 @@ class web_db_manager {
             }
             $i++;
         }
-        $query .= " WHERE ";
-        $i = 1;
-        foreach ($filter as $key => $value) {
-            $query .= "`".$key."` = '".$value."'";
-            if($i != count($values)) {
-                $query .= " AND ";
-            }
-            $i++;
+        $query .= $this->get_filter($filter).";";
+        if(!$this->query($query)) {
+            error_log("".$this->connection->error."\n");
         }
-        $query .= ";";
-        $this->query($query);
     }
 
     function connect() {
@@ -177,36 +195,20 @@ class web_analytics {
     private $s = null;
     private $h = null;
     private $d = null;
-    private $bot_name = null;
     private $agent_id = null;
     private $profile_id = null;
     private $isp_id = null;
     private $ua = null;
     private $c = null;
-    private $u_os = null;
-    private $u_browser = null;
-    private $u_device = null;
     private $u_country_code = null;
     private $u_ip = null;
     private $u_host = null;
-    private $u_location = null;
-    private $u_latitude = null;
-    private $u_longitude = null;
     private $u_language = null;
     private $ubid = null;
     private $unid = null;
     private $u_mobile = 0;
     private $u_bot = 0;
     private $u_profile = null;
-    private $r_target = null;
-    private $r_origin = null;
-    private $r_protocol = null;
-    private $r_port = null;
-    private $r_rayid = null;
-    private $rid = null;
-    private $r_domain = null;
-    private $r_accept = null;
-    private $u_port = null;
     
     // Check whether a string starts with a specific word
     function startsWith($haystack, $needle) {
@@ -228,6 +230,8 @@ class web_analytics {
             (preg_match('/archive.org_bot/i', $this->ua) && $this->endsWith($this->u_host, ".archive.org"))) {
             $this->u_bot = 1;
         }
+    }
+    function get_bot() {
         $bot_array = array('/googlebot/i' => 'Google',
                         '/bingbot/i' => 'Bing',
                         '/twitterbot/i' => 'Twitter',
@@ -239,9 +243,10 @@ class web_analytics {
                         '/archive.org_bot/i' => 'Archive.org');
         foreach ($bot_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $this->bot_name = $value;
+                return $value;
             }
         }
+        return null;
     }
     
     //  Get the os name and version from the user agent
@@ -288,9 +293,10 @@ class web_analytics {
                         );
         foreach ($os_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $this->u_os = $value;
+                return $value;
             }
         }
+        return null;
     }
     
     // Get the type of device from the user agent
@@ -326,12 +332,13 @@ class web_analytics {
                         );
         foreach ($device_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $this->u_device = $value;
+                return $value;
             }
         }
+        return null;
     }
     
-    // Get the browser name from the user agents
+    // Get the browser name from the user agent
     function get_browser() {
         $browser_array = array(
             '/mozilla/i' => 'Mozilla Compatible Agent',
@@ -367,9 +374,10 @@ class web_analytics {
         );
         foreach ($browser_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                $this->u_browser = $value;
+                return $value;
             }
         }
+        return null;
     }
     
     // Check whether the visitor uses a mobile device using the user agent
@@ -392,7 +400,7 @@ class web_analytics {
                 $this->u_country_code = $this->s["HTTP_CF_IPCOUNTRY"];
             }
         }
-        $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : false;
+        $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
     }
     
     // Anonymize ip address
@@ -422,7 +430,11 @@ class web_analytics {
                     $this->isp_id = $nrow[0];
                 } else {
                     $this->isp_id = $this->db_manager->generate_id();
-                    $this->db_manager->ex_gen_query("isps", array("domain" => $domain, "country" => $this->u_country_code), $this->isp_id);
+                    $this->db_manager->add("isps", array(
+                        "id" => $this->isp_id,
+                        "domain" => $domain,
+                        "country" => $this->u_country_code
+                    ));
                 }
             }
         }
@@ -442,12 +454,16 @@ class web_analytics {
             $nrow = $this->db_manager->get_one_row("SELECT id, host FROM networks WHERE ip = '".$this->u_ip."' LIMIT 1;");
             if($nrow != null) {
                 $this->unid = $nrow[0];
-                if($nrow[1] == null || $nrow[1] == "") {
-                    $this->db_manager->update("networks", array("host" => $this->u_host), array("id" => $this->unid));
-                }
+                $this->db_manager->update("networks", array("host" => $this->u_host), array("id" => $this->unid));
             } else {
                 $this->unid = $this->db_manager->generate_id(15);
-                $this->db_manager->ex_gen_query("networks", array("ip" => $this->u_ip, "host" => $this->u_host, "country" => $this->u_country_code, "isp_id" => $this->isp_id), $this->unid);
+                $this->db_manager->add("networks", array(
+                    "id" => $this->unid,
+                    "ip" => $this->u_ip,
+                    "host" => $this->u_host,
+                    "country" => $this->u_country_code,
+                    "isp_id" => $this->isp_id
+                ));
             }
         }
     }
@@ -465,18 +481,21 @@ class web_analytics {
             "bot_name" => "VARCHAR(30)"
         ));
         if($this->ua != null && $this->ua != "") {
-            $aidrow = $this->db_manager->get_one_row("SELECT id, browser, os, device FROM agents WHERE agent LIKE '".$this->ua."' LIMIT 1;");
+            $aidrow = $this->db_manager->get_one_row("SELECT id FROM agents WHERE agent LIKE '".$this->ua."' LIMIT 1;");
             if($aidrow != null) {
                 $this->agent_id = $aidrow[0];
-                $this->u_browser = $aidrow[1];
-                $this->u_os = $aidrow[2];
-                $this->u_device = $aidrow[3];
             } else {
-                $this->get_os();
-                $this->get_device();
-                $this->get_browser();
                 $this->agent_id = $this->db_manager->generate_id();
-                $this->db_manager->ex_gen_query("agents", array("agent" => $this->ua, "browser" => $this->u_browser, "os" => $this->u_os, "device" => $this->u_device, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "bot_name" => $this->bot_name), $this->agent_id);
+                $this->db_manager->add("agents", array(
+                    "id" => $this->agent_id,
+                    "agent" => $this->ua,
+                    "browser" => $this->get_browser(),
+                    "os" => $this->get_os(),
+                    "device" => $this->get_device(),
+                    "mobile" => $this->u_mobile,
+                    "bot" => $this->u_bot,
+                    "bot_name" => $this->get_bot()
+                ));
             }
         }
     }
@@ -495,26 +514,27 @@ class web_analytics {
             "java_enabled" => "TINYINT(1)"
         ));
         if(isset($this->c["device_profile"]) && isset($this->c["browser_profile"])) {
-            $this->u_profile = array();
+            $profile = array();
+            $profile["id"] = $this->db_manager->generate_id();
             $device_profile = json_decode($this->c["device_profile"], true);
-            $this->u_profile["screen_width"] = isset($device_profile["screen_width"]) ? intval($device_profile["screen_width"]) : null;
-            $this->u_profile["screen_height"] = isset($device_profile["screen_height"]) ? intval($device_profile["screen_height"]) : null;
-            $this->u_profile["interface_width"] = isset($device_profile["interface_width"]) ? intval($device_profile["interface_width"]) : null;
-            $this->u_profile["interface_height"] = isset($device_profile["interface_height"]) ? intval($device_profile["interface_height"]) : null;
-            $this->u_profile["color_depth"] = isset($device_profile["color_depth"]) ? intval($device_profile["color_depth"]) : null;
-            $this->u_profile["pixel_depth"] = isset($device_profile["pixel_depth"]) ? intval($device_profile["pixel_depth"]) : null;
+            $profile["screen_width"] = isset($device_profile["screen_width"]) ? intval($device_profile["screen_width"]) : null;
+            $profile["screen_height"] = isset($device_profile["screen_height"]) ? intval($device_profile["screen_height"]) : null;
+            $profile["interface_width"] = isset($device_profile["interface_width"]) ? intval($device_profile["interface_width"]) : null;
+            $profile["interface_height"] = isset($device_profile["interface_height"]) ? intval($device_profile["interface_height"]) : null;
+            $profile["color_depth"] = isset($device_profile["color_depth"]) ? intval($device_profile["color_depth"]) : null;
+            $profile["pixel_depth"] = isset($device_profile["pixel_depth"]) ? intval($device_profile["pixel_depth"]) : null;
             setcookie("device_profile", json_encode($device_profile), time()+60*60*24*90, "/", $this->d);
             $browser_profile = json_decode($this->c["browser_profile"], true);
             if(isset($browser_profile["cookies_enabled"]) && isset($browser_profile["java_enabled"])) {
                 if(is_int($browser_profile["cookie_enabled"]) && is_int($browser_profile["java_enabled"])) {
-                    $this->u_profile["cookies_enabled"] = intval($browser_profile["cookies_enabled"]) == 1 ? 1 : 0;
-                    $this->u_profile["java_enabled"] = intval($browser_profile["java_enabled"]) == 1 ? 1 : 0;
+                    $profile["cookies_enabled"] = intval($browser_profile["cookies_enabled"]) == 1 ? 1 : 0;
+                    $profile["java_enabled"] = intval($browser_profile["java_enabled"]) == 1 ? 1 : 0;
                 } else if(is_string($browser_profile["cookie_enabled"]) && is_string($browser_profile["java_enabled"])) {
-                    $this->u_profile["cookies_enabled"] = $browser_profile["cookies_enabled"] == "true" ? 1 : 0;
-                    $this->u_profile["java_enabled"] = $browser_profile["java_enabled"] == "true" ? 1 : 0;
+                    $profile["cookies_enabled"] = $browser_profile["cookies_enabled"] == "true" ? 1 : 0;
+                    $profile["java_enabled"] = $browser_profile["java_enabled"] == "true" ? 1 : 0;
                 } else if(is_bool($browser_profile["cookies_enabled"]) && is_bool($browser_profile["java_enabled"])) {
-                    $this->u_profile["cookies_enabled"] = $browser_profile["cookies_enabled"] == true ? 1 : 0;
-                    $this->u_profile["java_enabled"] = $browser_profile["java_enabled"] == true ? 1 : 0;
+                    $profile["cookies_enabled"] = $browser_profile["cookies_enabled"] == true ? 1 : 0;
+                    $profile["java_enabled"] = $browser_profile["java_enabled"] == true ? 1 : 0;
                 }
             }
             setcookie("browser_profile", json_encode($browser_profile), time()+60*60*24*90, "/", $this->d);
@@ -522,11 +542,11 @@ class web_analytics {
             $search_query = "";
             $search_count = 0;
             foreach ($search_keys as $key) {
-                if(isset($this->u_profile[$key]) && $this->u_profile[$key] != null) {
+                if(isset($profile[$key]) && $profile[$key] != null) {
                     if($search_count == 0) {
-                        $search_query .= "".$key." = '".$this->u_profile[$key]."'";
+                        $search_query .= "".$key." = '".$profile[$key]."'";
                     } else {
-                        $search_query .= " AND ".$key." = '".$this->u_profile[$key]."'";
+                        $search_query .= " AND ".$key." = '".$profile[$key]."'";
                     }
                 } else {
                     if($search_count == 0) {
@@ -537,12 +557,12 @@ class web_analytics {
                 }
                 $search_count++;
             }
-            $profile = $this->db_manager->get_one_row("SELECT id FROM profiles WHERE ".$search_query." LIMIT 1;");
-            if($profile != null) {
-                $this->profile_id = $profile[0];
+            $row = $this->db_manager->get_one_row("SELECT id FROM profiles WHERE ".$search_query." LIMIT 1;");
+            if($row != null) {
+                $this->profile_id = $row[0];
             } else {
-                $this->profile_id = $this->db_manager->generate_id();
-                $this->db_manager->ex_gen_query("profiles", $this->u_profile, $this->profile_id);
+                $this->profile_id = $profile["id"];
+                $this->db_manager->add("profiles", $profile);
             }
         }
     }
@@ -611,33 +631,44 @@ class web_analytics {
                 $result->close();
             }
             if($ubid_count == 1) {
-                $cidrow = null;
-                if($this->agent_id != null) {
-                    $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY time DESC LIMIT 1;");
-                } else {
-                    $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id IS NULL ORDER BY time DESC LIMIT 1;");
-                }
-                $cidregenerate = true;
-                if($cidrow != null) {
-                    if(strtotime($cidrow[2]) >= strtotime("-90 days") && $cidrow[1] == $this->d) {
-                        $cidregenerate = false;
-                    }
-                }
-                if($cidregenerate == false) {
-                    setcookie("webid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
-                    $this->db_manager->update("trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $cidrow[0]));
-                } else {
-                    $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
-                    $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
-                    setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
-                }
                 $this->ubid = $data_ubid;
                 $this->db_manager->update("browsers", array("last_update" => date('Y-m-d H:i:s')), array("id" => $this->ubid));
+                $cidrow = $this->db_manager->get_one_row("SELECT id, domain, time FROM trackers".$this->db_manager->get_filter(array("browser_id" => $data_ubid, "agent_id" => $this->agent_id))." ORDER BY time DESC LIMIT 1;");
+                if($cidrow != null) {
+                    if(strtotime($cidrow[2]) >= strtotime("-90 days") && $cidrow[1] == $this->d) {
+                        setcookie("webid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
+                        $this->db_manager->update("trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $cidrow[0]));
+                        return;
+                    }
+                }
+                $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$this->ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
+                $this->db_manager->add("trackers", array(
+                    "id" => $cid,
+                    "domain" => $this->d,
+                    "browser_id" => $this->ubid,
+                    "agent_id" => $this->agent_id
+                ));
+                setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
             } else {
                 $this->ubid = $this->db_manager->generate_id(15);
-                $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $this->ubid, "agent_id" => $this->agent_id), $cid);
+                $this->db_manager->add("trackers", array(
+                    "id" => $cid,
+                    "domain" => $this->d,
+                    "browser_id" => $this->ubid,
+                    "agent_id" => $this->agent_id
+                ));
                 setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
-                $this->db_manager->ex_gen_query("browsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
+                $this->db_manager->add("browsers", array(
+                    "id" => $this->ubid,
+                    "ip" => $this->u_ip,
+                    "country" => $this->u_country_code,
+                    "language" => $this->u_language,
+                    "mobile" => $this->u_mobile,
+                    "bot" => $this->u_bot,
+                    "agent_id" => $this->agent_id,
+                    "network_id" => $this->unid,
+                    "profile_id" => $this->profile_id
+                ));
             }
         }
     }
@@ -658,15 +689,20 @@ class web_analytics {
             "browser_id" => "VARCHAR(15)",
             "network_id" => "VARCHAR(15)"
         ));
-        $this->r_protocol = isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null;
-        $this->r_port = isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null;
-        $this->r_rayid = isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null;
-        $this->r_target = isset($this->s["REQUEST_URI"]) ? $this->s["REQUEST_URI"] : null;
-        $this->r_origin = isset($this->s["HTTP_REFERER"]) ? $this->s["HTTP_REFERER"] : null;
-        $this->r_accept = isset($this->d['HTTP_ACCEPT']) ? "".explode(",", $this->s['HTTP_ACCEPT'])[0]."" : null;
-        $this->rid = $this->db_manager->generate_id(15);
-        $this->r_domain = strtolower($this->h);
-        $this->db_manager->ex_gen_query("requests", array("accept" => $this->r_accept, "protocol" => $this->r_protocol, "port" => $this->r_port, "host" => $this->r_domain, "uri" => $this->r_target, "referrer" => $this->r_origin, "visitor_ip" => $this->u_ip, "visitor_country" => $this->u_country_code, "cf_ray_id" => $this->r_rayid, "browser_id" => $this->ubid, "network_id" => $this->unid), $this->rid);
+        $this->db_manager->add("requests", array(
+            "id" => $this->db_manager->generate_id(15),
+            "accept" => isset($this->d['HTTP_ACCEPT']) ? "".explode(",", $this->s['HTTP_ACCEPT'])[0]."" : null,
+            "protocol" => isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null,
+            "port" => isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null,
+            "host" => strtolower($this->h),
+            "uri" => isset($this->s["REQUEST_URI"]) ? $this->s["REQUEST_URI"] : null,
+            "referrer" => isset($this->s["HTTP_REFERER"]) ? $this->s["HTTP_REFERER"] : null,
+            "visitor_ip" => $this->u_ip,
+            "visitor_country" => $this->u_country_code,
+            "cf_ray_id" => isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null,
+            "browser_id" => $this->ubid,
+            "network_id" => $this->unid
+        ));
     }
     
     // Construct: web_analytics({db_manager}, $_SERVER, $_COOKIE)
