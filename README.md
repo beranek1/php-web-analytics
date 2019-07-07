@@ -1,7 +1,7 @@
-# web analytics by beranek1
+# WebAnalytics
 A ready to use collection of php scripts for web analytics.
 
-## Why should I use web analytics?
+## Why should I use WebAnalytics?
 There are atleast 4 reasons:
 * **it's server-sided**
 * **it's independent**
@@ -47,4 +47,4 @@ $web_analytics->echo_script();
 * a MySQL Server
 * (a webserver of course)
 
-### PLEASE NOTE: web analytics is still in development. We rely on your feedback!
+### PLEASE NOTE: WebAnalytics is still in development. We rely on your feedback!
