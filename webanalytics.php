@@ -122,6 +122,29 @@ class web_db_manager {
         $this->query($query);
     }
 
+    function update($table, $values, $filter) {
+        $query = "UPDATE `".$table."` SET ";
+        $i = 1;
+        foreach ($values as $key => $value) {
+            $query .= "`".$key."` = '".$value."'";
+            if($i != count($values)) {
+                $query .= ", ";
+            }
+            $i++;
+        }
+        $query .= " WHERE ";
+        $i = 1;
+        foreach ($filter as $key => $value) {
+            $query .= "`".$key."` = '".$value."'";
+            if($i != count($values)) {
+                $query .= " AND ";
+            }
+            $i++;
+        }
+        $query .= ";";
+        $this->query($query);
+    }
+
     function connect() {
         $this->connection = new mysqli($this->host, $this->user, $this->password, $this->database);
         if($this->connection->connect_errno) {
@@ -390,20 +413,17 @@ class web_analytics {
             "country" => "VARCHAR(2)",
             "last_update" => "TIMESTAMP NULL"
         ));
-        $domain = null;
         if(isset($this->u_host) && filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
             $domain_parts = explode(".", $this->u_host);
             if(count($domain_parts) >= 2) {
                 $domain = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
-            }
-        }
-        if($domain != null) {
-            $nrow = $this->db_manager->get_one_row("SELECT id FROM isps WHERE domain = '".$domain."' LIMIT 1;");
-            if($nrow != null) {
-                $this->isp_id = $nrow[0];
-            } else {
-                $this->isp_id = $this->db_manager->generate_id();
-                $this->db_manager->ex_gen_query("isps", array("domain" => $domain, "country" => $this->u_country_code), $this->isp_id);
+                $nrow = $this->db_manager->get_one_row("SELECT id FROM isps WHERE domain = '".$domain."' LIMIT 1;");
+                if($nrow != null) {
+                    $this->isp_id = $nrow[0];
+                } else {
+                    $this->isp_id = $this->db_manager->generate_id();
+                    $this->db_manager->ex_gen_query("isps", array("domain" => $domain, "country" => $this->u_country_code), $this->isp_id);
+                }
             }
         }
     }
@@ -423,7 +443,7 @@ class web_analytics {
             if($nrow != null) {
                 $this->unid = $nrow[0];
                 if($nrow[1] == null || $nrow[1] == "") {
-                    $this->db_manager->query("UPDATE networks SET host = '".$this->u_host."' WHERE id = '".$this->unid."';");
+                    $this->db_manager->update("networks", array("host" => $this->u_host), array("id" => $this->unid));
                 }
             } else {
                 $this->unid = $this->db_manager->generate_id(15);
@@ -477,18 +497,12 @@ class web_analytics {
         if(isset($this->c["device_profile"]) && isset($this->c["browser_profile"])) {
             $this->u_profile = array();
             $device_profile = json_decode($this->c["device_profile"], true);
-            if(isset($device_profile["screen_width"]) && isset($device_profile["screen_height"])) {
-                $this->u_profile["screen_width"] = intval($device_profile["screen_width"]);
-                $this->u_profile["screen_height"] = intval($device_profile["screen_height"]);
-            }
-            if(isset($device_profile["interface_width"]) && isset($device_profile["interface_height"])) {
-                $this->u_profile["interface_width"] = intval($device_profile["interface_width"]);
-                $this->u_profile["interface_height"] = intval($device_profile["interface_height"]);
-            }
-            if(isset($device_profile["color_depth"]) && isset($device_profile["pixel_depth"])) {
-                $this->u_profile["color_depth"] = intval($device_profile["color_depth"]);
-                $this->u_profile["pixel_depth"] = intval($device_profile["pixel_depth"]);
-            }
+            $this->u_profile["screen_width"] = isset($device_profile["screen_width"]) ? intval($device_profile["screen_width"]) : null;
+            $this->u_profile["screen_height"] = isset($device_profile["screen_height"]) ? intval($device_profile["screen_height"]) : null;
+            $this->u_profile["interface_width"] = isset($device_profile["interface_width"]) ? intval($device_profile["interface_width"]) : null;
+            $this->u_profile["interface_height"] = isset($device_profile["interface_height"]) ? intval($device_profile["interface_height"]) : null;
+            $this->u_profile["color_depth"] = isset($device_profile["color_depth"]) ? intval($device_profile["color_depth"]) : null;
+            $this->u_profile["pixel_depth"] = isset($device_profile["pixel_depth"]) ? intval($device_profile["pixel_depth"]) : null;
             setcookie("device_profile", json_encode($device_profile), time()+60*60*24*90, "/", $this->d);
             $browser_profile = json_decode($this->c["browser_profile"], true);
             if(isset($browser_profile["cookies_enabled"]) && isset($browser_profile["java_enabled"])) {
@@ -543,7 +557,7 @@ class web_analytics {
         ));
         $this->db_manager->create_table("browsers", array(
             "id" => "VARCHAR(15) PRIMARY KEY",
-            "ip" => "VARCHAR(45)",
+            "ip" => "VARCHAR(45) NOT NULL",
             "country" => "VARCHAR(2)",
             "language" => "VARCHAR(2)",
             "mobile" => "TINYINT(1)",
@@ -554,86 +568,76 @@ class web_analytics {
             "last_update" => "TIMESTAMP NULL"
         ));
         if(isset($this->unid)) {
-            $identified = false;
             if(isset($this->c["webid"])) {
                 $cookie_cid = $this->c["webid"];
                 if(strlen($cookie_cid) == 20) {
                     $cidrow = $this->db_manager->get_one_row("SELECT browser_id FROM trackers WHERE id = '".$cookie_cid."' AND domain = '".$this->d."' LIMIT 1;");
                     if($cidrow != null) {
-                        $this->db_manager->query("UPDATE trackers SET time = '".date('Y-m-d H:i:s')."' WHERE id = '".$cookie_cid."';");
-                        $row = $this->db_manager->get_one_row("SELECT ip, network_id FROM browsers WHERE id = '".$cidrow[0]."' LIMIT 1;");
+                        $this->db_manager->update("trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $cookie_cid));
+                        $row = $this->db_manager->get_one_row("SELECT id FROM browsers WHERE id = '".$cidrow[0]."' LIMIT 1;");
                         if($row != null) {
                             setcookie("webid", $cookie_cid, time()+60*60*24*180, "/", $this->d);
                             $this->ubid = $cidrow[0];
-                            if($this->u_ip != $row[0] && $this->u_ip != null && $this->u_ip != "") {
-                                $this->db_manager->query("UPDATE browsers SET ip = '".$this->u_ip."' WHERE id = '".$this->ubid."';");
-                            }
-                            if($row[1] != null && $row[1] != "") {
-                                if($this->unid != $row[1] && $this->unid != null && $this->unid != "") {
-                                    $this->db_manager->query("UPDATE browsers SET network_id = '".$this->unid."' WHERE id = '".$this->ubid."';");
-                                }
-                            } else {
-                                $this->db_manager->query("UPDATE browsers SET network_id = '".$this->unid."' WHERE id = '".$this->ubid."';");
-                            }
-                            if($this->profile_id != null) {
-                                $this->db_manager->query("UPDATE browsers SET profile_id = '".$this->profile_id."' WHERE id = '".$this->ubid."';");
-                            }
-                            $this->db_manager->query("UPDATE browsers SET agent_id = '".$this->agent_id."', last_update = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
-                            $identified = true;
+                            $this->db_manager->update("browsers", array(
+                                "ip" => $this->u_ip,
+                                "network_id" => $this->unid,
+                                "profile_id" => $this->profile_id,
+                                "agent_id" => $this->agent_id,
+                                "last_update" => date('Y-m-d H:i:s')
+                            ), array("id" => $this->ubid));
+                            return;
                         }
                     }
                 }
             }
-            if($identified == false) {
-                $cid = $this->db_manager->generate_id(20);
-                $result = null;
-                if($this->u_language != null) {
-                    $result = $this->db_manager->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language = '".$this->u_language."' AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
+            $cid = $this->db_manager->generate_id(20);
+            $result = null;
+            if($this->u_language != null) {
+                $result = $this->db_manager->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language = '".$this->u_language."' AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
+            } else {
+                if($this->u_bot == 1) {
+                    $result = $this->db_manager->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND bot = 1 AND last_update >= '".date('Y-m-d H:i:s', strtotime("-90 days"))."';");
                 } else {
-                    if($this->u_bot == 1) {
-                        $result = $this->db_manager->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND bot = 1 AND last_update >= '".date('Y-m-d H:i:s', strtotime("-90 days"))."';");
-                    } else {
-                        $result = $this->db_manager->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
+                    $result = $this->db_manager->query("SELECT id FROM browsers WHERE network_id = '".$this->unid."' AND agent_id = '".$this->agent_id."' AND language IS NULL AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
+                }
+            }
+            $data_ubid = "";
+            $ubid_count = 0;
+            if($result instanceof mysqli_result) {
+                while($row = $result->fetch_row()) {
+                    $data_ubid = $row[0];
+                    $ubid_count++;
+                }
+                $result->close();
+            }
+            if($ubid_count == 1) {
+                $cidrow = null;
+                if($this->agent_id != null) {
+                    $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY time DESC LIMIT 1;");
+                } else {
+                    $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id IS NULL ORDER BY time DESC LIMIT 1;");
+                }
+                $cidregenerate = true;
+                if($cidrow != null) {
+                    if(strtotime($cidrow[2]) >= strtotime("-90 days") && $cidrow[1] == $this->d) {
+                        $cidregenerate = false;
                     }
                 }
-                $data_ubid = "";
-                $ubid_count = 0;
-                if($result instanceof mysqli_result) {
-                    while($row = $result->fetch_row()) {
-                        $data_ubid = $row[0];
-                        $ubid_count++;
-                    }
-                    $result->close();
-                }
-                if($ubid_count == 1) {
-                    $cidrow = null;
-                    if($this->agent_id != null) {
-                        $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' ORDER BY time DESC LIMIT 1;");
-                    } else {
-                        $cidrow = $this->db_manager->get_one_row("SELECT id, domain, last FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id IS NULL ORDER BY time DESC LIMIT 1;");
-                    }
-                    $cidregenerate = true;
-                    if($cidrow != null) {
-                        if(strtotime($cidrow[2]) >= strtotime("-90 days") && $cidrow[1] == $this->d) {
-                            $cidregenerate = false;
-                        }
-                    }
-                    if($cidregenerate == false) {
-                        setcookie("webid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
-                        $this->db_manager->query("UPDATE trackers SET time = '".date('Y-m-d H:i:s')."' WHERE id = '".$cidrow[0]."';");
-                    } else {
-                        $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
-                        $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
-                        setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
-                    }
-                    $this->ubid = $data_ubid;
-                    $this->db_manager->query("UPDATE browsers SET last_update = '".date('Y-m-d H:i:s')."' WHERE id = '".$this->ubid."';");
+                if($cidregenerate == false) {
+                    setcookie("webid", $cidrow[0], time()+60*60*24*180, "/", $this->d);
+                    $this->db_manager->update("trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $cidrow[0]));
                 } else {
-                    $this->ubid = $this->db_manager->generate_id(15);
-                    $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $this->ubid, "agent_id" => $this->agent_id), $cid);
+                    $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$data_ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
+                    $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $data_ubid, "agent_id" => $this->agent_id), $cid);
                     setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
-                    $this->db_manager->ex_gen_query("browsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
                 }
+                $this->ubid = $data_ubid;
+                $this->db_manager->update("browsers", array("last_update" => date('Y-m-d H:i:s')), array("id" => $this->ubid));
+            } else {
+                $this->ubid = $this->db_manager->generate_id(15);
+                $this->db_manager->ex_gen_query("trackers", array("domain" => $this->d, "browser_id" => $this->ubid, "agent_id" => $this->agent_id), $cid);
+                setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
+                $this->db_manager->ex_gen_query("browsers", array("ip" => $this->u_ip, "country" => $this->u_country_code, "language" => $this->u_language, "mobile" => $this->u_mobile, "bot" => $this->u_bot, "agent_id" => $this->agent_id, "network_id" => $this->unid, "profile_id" => $this->profile_id), $this->ubid);
             }
         }
     }
@@ -657,18 +661,8 @@ class web_analytics {
         $this->r_protocol = isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null;
         $this->r_port = isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null;
         $this->r_rayid = isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null;
-        if(isset($this->s["REQUEST_URI"])) {
-            $uri = $this->s["REQUEST_URI"];
-            if($uri != null && $uri != "" && $uri != "/") {
-                $this->r_target = $uri;
-            }
-        }
-        if(isset($this->s["HTTP_REFERER"])) {
-            $origin = $this->s["HTTP_REFERER"];
-            if($origin != null && $origin != "") {
-                $this->r_origin = $origin;
-            }
-        }
+        $this->r_target = isset($this->s["REQUEST_URI"]) ? $this->s["REQUEST_URI"] : null;
+        $this->r_origin = isset($this->s["HTTP_REFERER"]) ? $this->s["HTTP_REFERER"] : null;
         $this->r_accept = isset($this->d['HTTP_ACCEPT']) ? "".explode(",", $this->s['HTTP_ACCEPT'])[0]."" : null;
         $this->rid = $this->db_manager->generate_id(15);
         $this->r_domain = strtolower($this->h);

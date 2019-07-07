@@ -323,6 +323,29 @@ class web_db_manager {
         $this->query($query);
     }
 
+    function update($table, $values, $filter) {
+        $query = "UPDATE `".$table."` SET ";
+        $i = 1;
+        foreach ($values as $key => $value) {
+            $query .= "`".$key."` = '".$value."'";
+            if($i != count($values)) {
+                $query .= ", ";
+            }
+            $i++;
+        }
+        $query .= " WHERE ";
+        $i = 1;
+        foreach ($filter as $key => $value) {
+            $query .= "`".$key."` = '".$value."'";
+            if($i != count($values)) {
+                $query .= " AND ";
+            }
+            $i++;
+        }
+        $query .= ";";
+        $this->query($query);
+    }
+
     function connect() {
         $this->connection = new mysqli($this->host, $this->user, $this->password, $this->database);
         if($this->connection->connect_errno) {
