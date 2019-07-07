@@ -25,7 +25,7 @@ include "webanalytics.php";
 
 After collecting enough data you will see a simple report when opening webstatistics.php.
 
-### Interested in using web analytics as a library or in a modified way? You can disable auto run in the settings:
+### Interested in using WebAnalytics as a library or in a modified way? You can disable auto run in the settings:
 ```php
 $web_auto_run = FALSE;
 ```
