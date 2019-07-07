@@ -1,4 +1,4 @@
-# web analytics
+# web analytics by beranek1
 A ready to use collection of php scripts for web analytics.
 
 ## Why should I use web analytics?
@@ -25,9 +25,21 @@ include "webanalytics.php";
 
 After collecting enough data you will see a simple report when opening webstatistics.php.
 
-Interested in using web analytics as a library or in a modified way? You can disable auto run in the settings:
+### Interested in using web analytics as a library or in a modified way? You can disable auto run in the settings:
 ```php
 $web_auto_run = FALSE;
+```
+
+To run web analytics manually use following code:
+```php
+$web_analytics_db->connect();
+$web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
+$web_analytics_db->close();
+```
+
+As a professional you might also want to try our yet experimental JavaScript for collecting additional data, following will output a html <script> element containing the script:
+```php
+$web_analytics->echo_script();
 ```
 
 ## Requirements
