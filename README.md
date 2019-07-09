@@ -37,9 +37,9 @@ $web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
 $web_analytics_db->close();
 ```
 
-As a professional you might also want to try our yet experimental JavaScript for collecting additional data, following will output a html <script> element containing the script:
-```php
-$web_analytics->echo_script();
+As a professional you might also want to try our yet experimental JavaScript for collecting additional data:
+```html
+<script src="wa.js"></script>
 ```
 
 ## Requirements
