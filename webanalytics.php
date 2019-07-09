@@ -52,7 +52,7 @@ class web_db_manager {
         $i = 1;
         foreach ($filter as $key => $value) {
             if(isset($value)) {
-                $query .= "`".$key."` = '".$value."'";
+                $query .= "`".$key."` = '".strval($value)."'";
             } else {
                 $query .= "`".$key."` IS NULL";
             }
@@ -66,8 +66,7 @@ class web_db_manager {
 
     function count($table, $filter = null) {
         $count = 0;
-        $query = "SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";";
-        $result = $this->connection->query($query);
+        $result = $this->connection->query("SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";");
         if($result instanceof mysqli_result) {
             if($row = $result->fetch_row()) {
                 $count = intval($row[0]);
@@ -88,7 +87,7 @@ class web_db_manager {
         }
         return $rows;
     }
-    
+
     function get_one_row($query) {
         $row0 = null;
         $result = $this->connection->query($query);
@@ -99,6 +98,10 @@ class web_db_manager {
             $result->close();
         }
         return $row0;
+    }
+    
+    function first($table, $keys, $filter) {
+        return $this->get_one_row("SELECT ".$keys." FROM ".$table."".$this->get_filter($filter)." LIMIT 1;");
     }
     
     function generate_id($length = 10) {
@@ -122,12 +125,17 @@ class web_db_manager {
                     $values .= ", ";
                 }
                 $keys .= "`".$key."`";
-                $values .= "'".$value."'";
+                $values .= "'".strval($value)."'";
                 $i++;
             }
         }
-        $query = "INSERT INTO ".$table." (".$keys.") VALUES (".$values.");";
         if(!$this->connection->query("INSERT INTO ".$table." (".$keys.") VALUES (".$values.");")) {
+            error_log("".$this->connection->error."\n");
+        }
+    }
+
+    function delete($table, $filter) {
+        if(!$this->connection->query("DELETE FROM ".$table."".$this->get_filter($filter).";")) {
             error_log("".$this->connection->error."\n");
         }
     }
@@ -395,7 +403,7 @@ class web_analytics {
             $domain_parts = explode(".", $this->u_host);
             if(count($domain_parts) >= 2) {
                 $domain = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
-                $row = $this->db_manager->get_one_row("SELECT id FROM isps WHERE domain = '".$domain."' LIMIT 1;");
+                $row = $this->db_manager->first("isps", "id", array("domain" => $domain));
                 if($row != null) {
                     return $row[0];
                 }
@@ -422,7 +430,7 @@ class web_analytics {
             "last_update" => "TIMESTAMP NULL"
         ));
         if(isset($this->u_ip)) {
-            $row = $this->db_manager->get_one_row("SELECT id, host FROM networks WHERE ip = '".$this->u_ip."' LIMIT 1;");
+            $row = $this->db_manager->first("networks", "id, host", array("ip" => $this->u_ip));
             if($row != null) {
                 $this->db_manager->update("networks", array("host" => $this->u_host), array("id" => $row[0]));
                 return $row[0];
@@ -498,7 +506,7 @@ class web_analytics {
                     $search_query .= " AND ";
                 }
                 if(isset($profile[$key]) && $profile[$key] != null) {
-                    $search_query .= "".$key." = '".$profile[$key]."'";
+                    $search_query .= "".$key." = '".strval($profile[$key])."'";
                 } else {
                     $search_query .= "".$key." IS NULL";
                 }
@@ -534,24 +542,20 @@ class web_analytics {
             "profile_id" => "VARCHAR(10)",
             "last_update" => "TIMESTAMP NULL"
         ));
-        if(isset($this->c["webid"])) {
-            $cookie_cid = $this->c["webid"];
-            if(strlen($cookie_cid) == 20) {
-                $cidrow = $this->db_manager->get_one_row("SELECT browser_id FROM trackers WHERE id = '".$cookie_cid."' AND domain = '".$this->d."' LIMIT 1;");
-                if($cidrow != null) {
-                    $this->db_manager->update("trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $cookie_cid));
-                    $row = $this->db_manager->get_one_row("SELECT id FROM browsers WHERE id = '".$cidrow[0]."' LIMIT 1;");
-                    if($row != null) {
-                        setcookie("webid", $cookie_cid, time()+60*60*24*180, "/", $this->d);
-                        $this->db_manager->update("browsers", array(
-                            "ip" => $this->u_ip,
-                            "network_id" => $this->unid,
-                            "profile_id" => $this->profile_id,
-                            "agent_id" => $this->agent_id,
-                            "last_update" => date('Y-m-d H:i:s')
-                        ), array("id" => $cidrow[0]));
-                        return $cidrow[0];
-                    }
+        if(isset($this->c["webid"]) && strlen($this->c["webid"]) == 20) {
+            $row = $this->db_manager->first("trackers", "browser_id", array("id" => $this->c["webid"], "domain" => $this->d));
+            if($row != null) {
+                $this->db_manager->update("trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $this->c["webid"]));
+                if($this->db_manager->first("browsers", "id", array("id" => $row[0])) != null) {
+                    setcookie("webid", $this->c["webid"], time()+60*60*24*180, "/", $this->d);
+                    $this->db_manager->update("browsers", array(
+                        "ip" => $this->u_ip,
+                        "network_id" => $this->unid,
+                        "profile_id" => $this->profile_id,
+                        "agent_id" => $this->agent_id,
+                        "last_update" => date('Y-m-d H:i:s')
+                    ), array("id" => $row[0]));
+                    return $row[0];
                 }
             }
         }
@@ -581,7 +585,7 @@ class web_analytics {
                     return $ubid;
                 }
             }
-            $this->db_manager->query("DELETE FROM trackers WHERE browser_id = '".$ubid."' AND agent_id = '".$this->agent_id."' AND domain = '".$this->d."';");
+            $this->db_manager->delete("trackers", array("browser_id" => $ubid, "agent_id" => $this->agent_id, "domain" => $this->d));
             $this->db_manager->add("trackers", array(
                 "id" => $cid,
                 "domain" => $this->d,
@@ -648,12 +652,12 @@ class web_analytics {
     // Construct: web_analytics({db_manager}, $_SERVER, $_COOKIE)
     // If you don't want to anonymize ip adresses: web_analytics({db_manager}, $_SERVER, $_COOKIE, FALSE)
     // Please remember to write a privacy policy especially if you don't anonymize ip adresses and live in the EU.
-    function __construct($db_manager, $server, $clientcookies, $anonymousips = TRUE) {
+    function __construct($db_manager, $server, $cookies, $anonymousips = TRUE) {
         if($db_manager->connected) {
             $this->db_manager = $db_manager;
             $this->s = $server;
             $this->ua = isset($this->s['HTTP_USER_AGENT']) ? strtolower($this->s['HTTP_USER_AGENT']) : null;
-            $this->c = $clientcookies;
+            $this->c = $cookies;
             $this->u_ip = isset($this->s['REMOTE_ADDR']) ? $this->s['REMOTE_ADDR'] : null;
             if (filter_var($this->u_ip, FILTER_VALIDATE_IP)) {
                 $this->u_host = gethostbyaddr($this->u_ip);

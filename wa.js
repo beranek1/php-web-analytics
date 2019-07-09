@@ -10,8 +10,6 @@ device.color_depth = screen.colorDepth;
 device.pixel_depth = screen.pixelDepth;
 document.cookie = "device_profile=" + JSON.stringify(device) + "; " + expires + "; path=/";
 var browser = {};
-browser.interface_width = (window.outerWidth - window.innerWidth);
-browser.interface_height = (window.outerHeight - window.innerHeight);
 browser.cookies_enabled = navigator.cookieEnabled;
 browser.java_enabled = navigator.javaEnabled();
 document.cookie = "browser_profile=" + JSON.stringify(browser) + "; " + expires + "; path=/";

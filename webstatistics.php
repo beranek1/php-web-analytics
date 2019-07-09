@@ -124,6 +124,7 @@ progress {
     }
 }
 </style>
+<script src="wa.js"></script>
 </head>
 <body>
     <h1>Website statistics</h1>
@@ -250,7 +251,7 @@ class web_db_manager {
         $i = 1;
         foreach ($filter as $key => $value) {
             if(isset($value)) {
-                $query .= "`".$key."` = '".$value."'";
+                $query .= "`".$key."` = '".strval($value)."'";
             } else {
                 $query .= "`".$key."` IS NULL";
             }
@@ -264,8 +265,7 @@ class web_db_manager {
 
     function count($table, $filter = null) {
         $count = 0;
-        $query = "SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";";
-        $result = $this->connection->query($query);
+        $result = $this->connection->query("SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";");
         if($result instanceof mysqli_result) {
             if($row = $result->fetch_row()) {
                 $count = intval($row[0]);
@@ -286,7 +286,7 @@ class web_db_manager {
         }
         return $rows;
     }
-    
+
     function get_one_row($query) {
         $row0 = null;
         $result = $this->connection->query($query);
@@ -297,6 +297,10 @@ class web_db_manager {
             $result->close();
         }
         return $row0;
+    }
+    
+    function first($table, $keys, $filter) {
+        return $this->get_one_row("SELECT ".$keys." FROM ".$table."".$this->get_filter($filter)." LIMIT 1;");
     }
     
     function generate_id($length = 10) {
@@ -320,12 +324,17 @@ class web_db_manager {
                     $values .= ", ";
                 }
                 $keys .= "`".$key."`";
-                $values .= "'".$value."'";
+                $values .= "'".strval($value)."'";
                 $i++;
             }
         }
-        $query = "INSERT INTO ".$table." (".$keys.") VALUES (".$values.");";
         if(!$this->connection->query("INSERT INTO ".$table." (".$keys.") VALUES (".$values.");")) {
+            error_log("".$this->connection->error."\n");
+        }
+    }
+
+    function delete($table, $filter) {
+        if(!$this->connection->query("DELETE FROM ".$table."".$this->get_filter($filter).";")) {
             error_log("".$this->connection->error."\n");
         }
     }
