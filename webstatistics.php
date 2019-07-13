@@ -33,11 +33,10 @@ if($total_requests == 0) {
 $total_visitors = $web_analytics_db->count("wa_browsers");
 $total_networks = $web_analytics_db->count("wa_networks");
 $total_isps = $web_analytics_db->count("wa_isps");
-$mstrqstsr = $web_analytics_db->get_rows_array("SELECT `visitor_country`, COUNT(*) FROM wa_requests GROUP BY `visitor_country` ORDER BY COUNT(*) DESC;");
 $top_countries = array();
 $top_continents = array();
 $total_continents = 0;
-foreach($mstrqstsr as $country) {
+foreach($web_analytics_db->query("SELECT `visitor_country`, COUNT(*) FROM wa_requests GROUP BY `visitor_country` ORDER BY COUNT(*) DESC;") as $country) {
     if($country[0] != "" && $country[0] != null) {
         $top_countries[$country[0]] = $country[1];
         $continent = $country_to_continent[strtoupper($country[0])];
@@ -52,9 +51,8 @@ foreach($mstrqstsr as $country) {
 }
 arsort($top_continents);
 $total_countries = 0;
-$tpvstrsor = $web_analytics_db->get_rows_array("SELECT `country`, COUNT(*) FROM wa_browsers GROUP BY `country` ORDER BY COUNT(*) DESC;");
 $top_countriesvo = array();
-foreach($tpvstrsor as $country) {
+foreach($web_analytics_db->query("SELECT `country`, COUNT(*) FROM wa_browsers GROUP BY `country` ORDER BY COUNT(*) DESC;") as $country) {
     if($country[0] != "" && $country[0] != null) {
         $top_countriesvo[$country[0]] = $country[1];
         $total_countries = $total_countries + 1;
@@ -62,10 +60,9 @@ foreach($tpvstrsor as $country) {
         $top_countriesvo["?"] = $country[1];
     }
 }
-$tplngsr = $web_analytics_db->get_rows_array("SELECT `language`, COUNT(*) FROM wa_browsers GROUP BY `language` ORDER BY COUNT(*) DESC;");
 $top_languages = array();
 $total_languages = 0;
-foreach($tplngsr as $language) {
+foreach($tplngsr = $web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa_browsers GROUP BY `language` ORDER BY COUNT(*) DESC;") as $language) {
     if($language != "" && $language != null) {
         $top_languages[$language[0]] = $language[1];
         $total_languages = $total_languages + 1;
@@ -73,19 +70,16 @@ foreach($tplngsr as $language) {
         $top_languages["?"] = $language[1];
     }
 }
-$tpusragntsr = $web_analytics_db->get_rows_array("SELECT `agent_id`, COUNT(*) FROM wa_browsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;");
 $top_useragents = array();
-foreach($tpusragntsr as $useragent) {
+foreach($web_analytics_db->query("SELECT `agent_id`, COUNT(*) FROM wa_browsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;") as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];
 }
-$tpispsr = $web_analytics_db->get_rows_array("SELECT `isp_id`, COUNT(*) FROM wa_networks GROUP BY `isp_id` ORDER BY COUNT(*) DESC;");
 $top_isps = array();
-foreach($tpispsr as $isp) {
+foreach($web_analytics_db->query("SELECT `isp_id`, COUNT(*) FROM wa_networks GROUP BY `isp_id` ORDER BY COUNT(*) DESC;") as $isp) {
     $top_isps[$isp[0]] = $isp[1];
 }
-$tpurir = $web_analytics_db->get_rows_array("SELECT `uri`, COUNT(*) FROM wa_requests GROUP BY `uri` ORDER BY COUNT(*) DESC;");
 $top_uris = array();
-foreach($tpurir as $uri) {
+foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP BY `uri` ORDER BY COUNT(*) DESC;") as $uri) {
     $top_uris[$uri[0]] = $uri[1];
 }
 ?>

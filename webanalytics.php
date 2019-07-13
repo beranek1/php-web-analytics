@@ -457,17 +457,17 @@ class web_analytics {
             "java_enabled" => "VARCHAR(5)"
         ));
         if(isset($this->c["device_profile"]) && isset($this->c["browser_profile"])) {
-            $profile = array();
-            $profile["id"] = $this->db_manager->generate_id();
-            $profile = array_merge(array("id" => $this->db_manager->generate_id()), json_decode($this->c["device_profile"], true), json_decode($this->c["browser_profile"], true));
+            $c_profile = array_merge(json_decode($this->c["device_profile"], true), json_decode($this->c["browser_profile"], true));
             $search_keys = array("screen_width", "screen_height", "interface_width", "interface_height", "color_depth", "pixel_depth", "cookies_enabled", "java_enabled");
             $search_query = "";
             $search_count = 0;
+            $profile = array("id" => $this->db_manager->generate_id());
             foreach ($search_keys as $key) {
                 if($search_count != 0) {
                     $search_query .= " AND ";
                 }
-                if(isset($profile[$key]) && $profile[$key] != null) {
+                if(isset($c_profile[$key]) && $c_profile[$key] != null) {
+                    $profile[$key] = $c_profile[$key];
                     $search_query .= "".$key." = '".strval($profile[$key])."'";
                 } else {
                     $search_query .= "".$key." IS NULL";
