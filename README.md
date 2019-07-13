@@ -47,3 +47,12 @@ As a professional you might also want to try our yet experimental JavaScript for
 * (a webserver of course)
 
 ### PLEASE NOTE: WebAnalytics is still in development. We rely on your feedback!
+
+# Information about upcoming releases
+## 0.2 new database manager
+The database manager will be modified to support more databases than mysql.
+## 0.3 new API
+This version will include a new universal php script called "wa.php" that can be used as web api as well as library for collecting and analysing data.
+## 0.4 new page for viewing statistics based on the API
+## 0.5 merging all classes to one
+## 1.0
