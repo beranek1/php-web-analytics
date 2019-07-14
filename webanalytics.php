@@ -182,20 +182,39 @@ class web_analytics {
         if(preg_match("/Mozilla\/\d.\d \([A-Za-z0-9_. ;:]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent)) {
             $webkit = true;
         }
+        $trident = false;
         if(preg_match_all("/\w+\/\d[\d.]*/", $user_agent, $matches)) {
             $browser = preg_split("/\//",$matches[0][array_key_last($matches[0])]);
             if($webkit) {
                 if(preg_match("/safari/i", $browser[0]) && preg_match("/chrome/i", $user_agent)) {
                     $browser = preg_split("/\//",$matches[0][2]);
                 }
+            } else if(preg_match("/trident/i", $browser[0]) && !$gecko) {
+                $trident = true;
             }
             $result["browser"]["name"] = $browser[0];
             $result["browser"]["version"] = $browser[1];
         }
+        if(preg_match("/\([A-Za-z0-9_. ;:\/]*\)/", $user_agent, $match)) {
+            $platform = preg_replace("/\(/", "", $match[0]);
+            $platform = preg_replace("/\)/", "", $platform);
+            $platforms = preg_split("/; /", $platform);
+            if($trident) {
+                $browser = preg_split("/ /",$platforms[1]);
+                if(preg_match("/msie/i", $browser[0])) {
+                    $result["browser"]["name"] = $browser[0];
+                    $result["browser"]["version"] = $browser[1];
+                } else {
+                    $result["browser"]["name"] = "msie";
+                    $version = preg_split("/:/", $platforms[array_key_last($platforms)]);
+                    $result["browser"]["version"] = $version[1];
+                }
+            }
+        }
         return $result;
     }
 
-    function get_bot() {
+    function check_if_bot() {
         $bot_array = array('/googlebot/i' => 'Google',
                         '/bingbot/i' => 'Bing',
                         '/twitterbot/i' => 'Twitter',
@@ -205,10 +224,10 @@ class web_analytics {
                         '/archive.org_bot/i' => 'Archive.org');
         foreach ($bot_array as $regex => $value) { 
             if (preg_match($regex, $this->ua)) {
-                return $value;
+                return TRUE;
             }
         }
-        return null;
+        return FALSE;
     }
     
     //  Get the os name and version from the user agent
@@ -337,13 +356,12 @@ class web_analytics {
             "id" => "VARCHAR(10) PRIMARY KEY",
             "agent" => "TEXT",
             "browser" => "VARCHAR(40)",
-            "browser_version" => "VARCHAR(10)",
+            "browser_version" => "VARCHAR(20)",
             "os" => "VARCHAR(40)",
             "os_version" => "VARCHAR(10)",
             "device" => "VARCHAR(40)",
             "mobile" => "TINYINT(1)",
-            "bot" => "TINYINT(1)",
-            "bot_name" => "VARCHAR(30)"
+            "bot" => "TINYINT(1)"
         ));
         $this->db_manager->create_table("wa_profiles", array(
             "id" => "VARCHAR(10) PRIMARY KEY",
@@ -452,8 +470,7 @@ class web_analytics {
             "os" => $this->get_os(),
             "device" => $this->get_device(),
             "mobile" => $this->u_mobile,
-            "bot" => $this->u_bot,
-            "bot_name" => $this->get_bot()
+            "bot" => $this->u_bot
         ));
         return $id;
     }
@@ -605,7 +622,7 @@ class web_analytics {
                 } else { $this->d = $domain; }
             }
             $this->u_mobile = preg_match('/mobile/i', $this->ua) ? 1 : 0;
-            $this->u_bot = $this->get_bot() != null ? 1 : 0;
+            $this->u_bot = $this->check_if_bot() ? 1 : 0;
             $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
             $this->u_country_code = $this->get_country_code();
             $this->check_database();
