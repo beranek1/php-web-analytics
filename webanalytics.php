@@ -173,7 +173,7 @@ class web_analytics {
     private $u_bot = 0;
     
     function analyse_user_agent($user_agent) {
-        $result = array("browser" => array("name" => null, "version" => null));
+        $result = array("browser" => array("name" => null, "version" => null), "os" => array("name" => null, "version" => null), "device" => array("name" => null));
         $gecko = false;
         if(preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_. ;:]*\) Gecko\/\d+/i", $user_agent)) {
             $gecko = true;
@@ -195,21 +195,60 @@ class web_analytics {
             $result["browser"]["name"] = $browser[0];
             $result["browser"]["version"] = $browser[1];
         }
-        if(preg_match("/\([A-Za-z0-9_. ;:\/]*\)/", $user_agent, $match)) {
+        if(preg_match("/\([A-Za-z0-9_.\- ;:\/]*\)/", $user_agent, $match)) {
             $platform = preg_replace("/\(/", "", $match[0]);
             $platform = preg_replace("/\)/", "", $platform);
             $platforms = preg_split("/; /", $platform);
+            $os = null;
+            $osv = null;
             if($trident) {
                 $browser = preg_split("/ /",$platforms[1]);
                 if(preg_match("/msie/i", $browser[0])) {
                     $result["browser"]["name"] = $browser[0];
                     $result["browser"]["version"] = $browser[1];
+                    $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[2]));
+                    $osv = preg_split("/ /",$platforms[2]);
+                    $result["device"]["name"] = "pc";
                 } else {
                     $result["browser"]["name"] = "msie";
                     $version = preg_split("/:/", $platforms[array_key_last($platforms)]);
                     $result["browser"]["version"] = $version[1];
                 }
             }
+            if(preg_match("/windows/i", $platforms[0])) {
+                $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[0]));
+                $osv = preg_split("/ /",$platforms[0]);
+                $result["device"]["name"] = "pc";
+                if(preg_match("/phone/i", $os[0])) {
+                    $result["device"]["name"] = $platforms[array_key_last($platforms)-1]." ".$platforms[array_key_last($platforms)];
+                }
+                if(isset($platforms[3]) && preg_match("/xbox/i", $platforms[3])) {
+                    $result["device"]["name"] = $platforms[3];
+                    if(isset($platforms[4])) {
+                        $result["device"]["name"] = $platforms[4];
+                    }
+                }
+            } else if(preg_match("/linux/i", $platforms[0])) {
+                $os = preg_split("/ \d/",$platforms[1]);
+                $osv = preg_split("/ /",$platforms[1]);
+                if(preg_match("/android/i", $os[0]) && preg_match("/build/i", $platforms[2])) {
+                    $device = preg_split("/ build/i", $platforms[2]);
+                    $result["device"]["name"] = $device[0];
+                }
+            } else if(preg_match("/cros/i", $platforms[1])) {
+                $os = preg_split("/ /",$platforms[1]);
+                $result["device"]["name"] = "chromebook";
+            } else if(preg_match("/macintosh/i", $platforms[0])) {
+                $os = preg_split("/ \d/",preg_replace("/intel /i", "", $platforms[1]));
+                $osv = preg_split("/ /",$platforms[1]);
+                $result["device"]["name"] = "mac";
+            } else if(preg_match("/iphone/i", $platforms[0]) || preg_match("/ipad/i", $platforms[0]) || preg_match("/ipod/i", $platforms[0])) {
+                $os = preg_split("/ \d/",preg_replace("/cpu /i", "", $platforms[1]));
+                $osv = preg_split("/ /", preg_replace("/ like mac os x/i", "", $platforms[1]));
+                $result["device"]["name"] = $platforms[0];
+            }
+            $result["os"]["name"] = isset($os) ? $os[0] : null;
+            $result["os"]["version"] = isset($osv) ? $osv[array_key_last($osv)] : null;
         }
         return $result;
     }
@@ -228,88 +267,6 @@ class web_analytics {
             }
         }
         return FALSE;
-    }
-    
-    //  Get the os name and version from the user agent
-    function get_os() {
-        $os_array = array('/windows nt/i' => 'Windows',
-                        '/windows nt 10/i' => 'Windows 10',
-                        '/windows nt 6.3/i' => 'Windows 8.1',
-                        '/windows nt 6.2/i' => 'Windows 8',
-                        '/windows nt 6.1/i' => 'Windows 7',
-                        '/windows nt 6.0/i' => 'Windows Vista',
-                        '/windows nt 5.2/i' => 'Windows Server 2003/XP x64',
-                        '/windows nt 5.1/i' => 'Windows XP',
-                        '/windows xp/i' => 'Windows XP',
-                        '/windows nt 5.0/i' => 'Windows 2000',
-                        '/windows me/i' => 'Windows ME',
-                        '/win98/i' => 'Windows 98',
-                        '/win95/i' => 'Windows 95',
-                        '/win16/i' => 'Windows 3.11',
-                        '/macintosh|mac os x/i' => 'Mac OS X',
-                        '/mac_powerpc/i' => 'Mac OS 9',
-                        '/linux/i' => 'Linux',
-                        '/ubuntu/i' => 'Ubuntu',
-                        '/cros/i' => 'Chrome OS',
-                        '/iphone/i' => 'iOS',
-                        '/ipod/i' => 'iOS',
-                        '/ipad/i' => 'iOS',
-                        '/android/i' => 'Android',
-                        '/blackberry/i' => 'BlackBerry',
-                        '/windows phone/i' => 'Windows Phone',
-                        '/windows phone 7/i' => 'Windows Phone 7',
-                        '/windows phone 8/i' => 'Windows Phone 8',
-                        '/windows phone 8.1/i' => 'Windows Phone 8.1',
-                        '/windows phone 10.0/i' => 'Windows 10 Mobile',
-                        '/webos/i' => 'webOS',
-                        '/tizen/i' => 'Tizen',
-                        '/symbos/i' => 'Symbian OS',
-                        '/cordova-amazon-fireos/i' => 'Fire OS',
-                        '/nintendo/i' => 'Nintendo',
-                        '/playstation/i' => 'Playstation',
-                        '/xbox/i' => 'Xbox'
-                        );
-        $os = null;
-        foreach ($os_array as $regex => $value) { 
-            if (preg_match($regex, $this->ua)) {
-                $os = $value;
-            }
-        }
-        return $os;
-    }
-    
-    // Get the type of device from the user agent
-    function get_device() {
-        $device_array = array('/windows/i' => 'PC',
-                        '/win98/i' => 'PC',
-                        '/win95/i' => 'PC',
-                        '/win16/i' => 'PC',
-                        '/macintosh|mac os x/i' => 'Mac',
-                        '/mac_powerpc/i' => 'Mac',
-                        '/linux/i' => 'PC',
-                        '/ubuntu/i' => 'PC',
-                        '/cros/i' => 'Chromebook',
-                        '/iphone/i' => 'iPhone',
-                        '/ipod/i' => 'iPod',
-                        '/ipad/i' => 'iPad',
-                        '/android/i' => 'Android',
-                        '/blackberry/i' => 'BlackBerry',
-                        '/windows phone/i' => 'Windows Phone',
-                        '/webos/i' => 'webOS Phone',
-                        '/tizen/i' => 'Tizen Phone',
-                        '/symbos/i' => 'Symbian Phone',
-                        '/cordova-amazon-fireos/i' => 'Fire Device',
-                        '/nintendo/i' => 'Nintendo Console',
-                        '/playstation/i' => 'Playstation Console',
-                        '/xbox/i' => 'Xbox Console'
-                        );
-        $device = null;
-        foreach ($device_array as $regex => $value) { 
-            if (preg_match($regex, $this->ua)) {
-                $device = $value;
-            }
-        }
-        return $device;
     }
     
     // Get user language and country from hostname and http header
@@ -467,8 +424,9 @@ class web_analytics {
             "agent" => $this->ua,
             "browser" => $uaa["browser"]["name"],
             "browser_version" => $uaa["browser"]["version"],
-            "os" => $this->get_os(),
-            "device" => $this->get_device(),
+            "os" => $uaa["os"]["name"],
+            "os_version" => $uaa["os"]["version"],
+            "device" => $uaa["device"]["name"],
             "mobile" => $this->u_mobile,
             "bot" => $this->u_bot
         ));
