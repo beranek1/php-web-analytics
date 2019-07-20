@@ -1,14 +1,11 @@
-# WebAnalytics
-A ready to use collection of php scripts for web analytics.
-
-## Why should I use WebAnalytics?
+# Why should I use WebAnalytics?
 There are atleast 4 reasons:
 * **it's server-sided**
 * **it's independent**
 * **it's open source**
 * **it's free**
 
-## Usage
+# Usage
 * Place webanalytics.php and websettings.php in the same directory as your own php scripts, and modify the database parameters in websettings.php.
 #### OR
 * Place only webanalytics.php in the same directory as your own php scripts and modify the database parameters in webanalytics.php.
@@ -41,12 +38,12 @@ As a professional you might also want to try our yet experimental JavaScript for
 <script src="wa.js"></script>
 ```
 
-## Requirements
+# Requirements
 * PHP 5.0 or higher
 * a database server with PDO driver
 * (a webserver of course)
 
-### PLEASE NOTE: WebAnalytics is still in development. We rely on your feedback!
+## PLEASE NOTE: WebAnalytics is still in development. We rely on your feedback!
 
 # Information about upcoming releases
 ## 0.3 new API
