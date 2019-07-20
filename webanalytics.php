@@ -175,19 +175,25 @@ class web_analytics {
     function analyse_user_agent($user_agent) {
         $result = array("browser" => array("name" => null, "version" => null), "os" => array("name" => null, "version" => null), "device" => array("name" => null));
         $gecko = false;
-        if(preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_. ;:]*\) Gecko\/\d+/i", $user_agent)) {
+        if(preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) Gecko\/\d+/i", $user_agent)) {
             $gecko = true;
         }
         $webkit = false;
-        if(preg_match("/Mozilla\/\d.\d \([A-Za-z0-9_. ;:]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent)) {
+        if(preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent)) {
             $webkit = true;
         }
         $trident = false;
         if(preg_match_all("/\w+\/\d[\d.]*/", $user_agent, $matches)) {
             $browser = preg_split("/\//",$matches[0][array_key_last($matches[0])]);
             if($webkit) {
-                if(preg_match("/safari/i", $browser[0]) && preg_match("/chrome/i", $user_agent)) {
+                if(preg_match("/safari/i", $browser[0]) && (preg_match("/chrome/i", $user_agent) || preg_match("/crios/i", $user_agent))) {
                     $browser = preg_split("/\//",$matches[0][2]);
+                    if(preg_match("/version/i", $browser[0])) {
+                        $browser = preg_split("/\//",$matches[0][3]);
+                    }
+                    if(!preg_match("/chrome/i", $browser[0])) {
+                        $browser[0] = "chrome";
+                    }
                 }
             } else if(preg_match("/trident/i", $browser[0]) && !$gecko) {
                 $trident = true;
@@ -234,6 +240,11 @@ class web_analytics {
                 if(preg_match("/android/i", $os[0]) && preg_match("/build/i", $platforms[2])) {
                     $device = preg_split("/ build/i", $platforms[2]);
                     $result["device"]["name"] = $device[0];
+                }
+            } else if(preg_match("/linux/i", $platforms[1])) {
+                $os = preg_split("/ /",$platforms[1]);
+                if(preg_match("/x11/i", $platforms[0])) {
+                    $result["device"]["name"] = "pc";
                 }
             } else if(preg_match("/cros/i", $platforms[1])) {
                 $os = preg_split("/ /",$platforms[1]);
