@@ -173,111 +173,89 @@ class web_analytics {
     private $u_bot = 0;
     
     function analyse_user_agent($user_agent) {
-        $result = array("browser" => array("name" => null, "version" => null), "os" => array("name" => null, "version" => null), "device" => array("name" => null));
-        $gecko = false;
-        if(preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) Gecko\/\d+/i", $user_agent)) {
-            $gecko = true;
-        }
-        $webkit = false;
-        if(preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent)) {
-            $webkit = true;
-        }
-        $trident = false;
+        $result = array();
+        $gecko = preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) Gecko\/\d+/i", $user_agent);
+        $webkit = preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent);
         if(preg_match_all("/\w+\/\d[\d.]*/", $user_agent, $matches)) {
             $browser = preg_split("/\//",$matches[0][array_key_last($matches[0])]);
+            $trident = (preg_match("/trident/i", $browser[0]) && !$gecko && !$webkit);
             if($webkit) {
-                if(preg_match("/safari/i", $browser[0]) && (preg_match("/chrome/i", $user_agent) || preg_match("/crios/i", $user_agent))) {
+                if(preg_match("/safari/i", $browser[0])) {
                     $browser = preg_split("/\//",$matches[0][2]);
-                    if(preg_match("/version/i", $browser[0])) {
-                        $browser = preg_split("/\//",$matches[0][3]);
-                    }
-                    if(!preg_match("/chrome/i", $browser[0])) {
-                        $browser[0] = "chrome";
+                    $i = 3;
+                    while((preg_match("/version/i", $browser[0]) || preg_match("/mobile/i", $browser[0])) && isset($matches[0][$i])) {
+                        $browser = preg_split("/\//",$matches[0][$i]);
+                        $i++;
                     }
                 }
-            } else if(preg_match("/trident/i", $browser[0]) && !$gecko) {
-                $trident = true;
             }
-            $result["browser"]["name"] = $browser[0];
-            $result["browser"]["version"] = $browser[1];
         }
         if(preg_match("/\([A-Za-z0-9_.\- ;:\/]*\)/", $user_agent, $match)) {
-            $platform = preg_replace("/\(/", "", $match[0]);
-            $platform = preg_replace("/\)/", "", $platform);
-            $platforms = preg_split("/; /", $platform);
-            $os = null;
-            $osv = null;
+            $platforms = preg_split("/; /", preg_replace("/\)/", "", preg_replace("/\(/", "", $match[0])));
             if($trident) {
                 $browser = preg_split("/ /",$platforms[1]);
                 if(preg_match("/msie/i", $browser[0])) {
-                    $result["browser"]["name"] = $browser[0];
-                    $result["browser"]["version"] = $browser[1];
                     $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[2]));
                     $osv = preg_split("/ /",$platforms[2]);
-                    $result["device"]["name"] = "pc";
+                    if(preg_match("/xbox/i", $platforms[array_key_last($platforms)])) {
+                        $result["device"]["name"] = $platforms[array_key_last($platforms)];
+                    }
                 } else {
-                    $result["browser"]["name"] = "msie";
+                    $browser[0] = "msie";
                     $version = preg_split("/:/", $platforms[array_key_last($platforms)]);
-                    $result["browser"]["version"] = $version[1];
+                    $browser[1] = $version[1];
                 }
             }
             if(preg_match("/windows/i", $platforms[0])) {
                 $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[0]));
                 $osv = preg_split("/ /",$platforms[0]);
-                $result["device"]["name"] = "pc";
                 if(preg_match("/phone/i", $os[0])) {
                     $result["device"]["name"] = $platforms[array_key_last($platforms)-1]." ".$platforms[array_key_last($platforms)];
                 }
-                if(isset($platforms[3]) && preg_match("/xbox/i", $platforms[3])) {
-                    $result["device"]["name"] = $platforms[3];
-                    if(isset($platforms[4])) {
-                        $result["device"]["name"] = $platforms[4];
-                    }
+                if(preg_match("/xbox/i", $platforms[array_key_last($platforms)])) {
+                    $result["device"]["name"] = $platforms[array_key_last($platforms)];
                 }
             } else if(preg_match("/linux/i", $platforms[0])) {
-                $os = preg_split("/ \d/",$platforms[1]);
-                $osv = preg_split("/ /",$platforms[1]);
-                if(preg_match("/android/i", $os[0]) && preg_match("/build/i", $platforms[2])) {
-                    $device = preg_split("/ build/i", $platforms[2]);
-                    $result["device"]["name"] = $device[0];
+                $i = preg_match("/u/i", $platforms[1]) ? 2 : 1;
+                $os = preg_split("/ \d/",$platforms[$i]);
+                if(preg_match("/android/i", $os[0])) {
+                    $osv = preg_split("/ /",$platforms[$i]);
+                } else {
+                    $os = preg_split("/ /",$platforms[0]);
                 }
-            } else if(preg_match("/linux/i", $platforms[1])) {
-                $os = preg_split("/ /",$platforms[1]);
-                if(preg_match("/x11/i", $platforms[0])) {
-                    $result["device"]["name"] = "pc";
+                foreach ($platforms as $property) {
+                    if(preg_match("/build/i", $property)) {
+                        $device = preg_split("/ build/i", $property);
+                        $result["device"]["name"] = $device[0];
+                    }
                 }
-            } else if(preg_match("/cros/i", $platforms[1])) {
+            } else if(preg_match("/linux/i", $platforms[1]) || preg_match("/cros/i", $platforms[1]) || preg_match("/ubuntu/i", $platforms[1])) {
                 $os = preg_split("/ /",$platforms[1]);
-                $result["device"]["name"] = "chromebook";
             } else if(preg_match("/macintosh/i", $platforms[0])) {
                 $os = preg_split("/ \d/",preg_replace("/intel /i", "", $platforms[1]));
                 $osv = preg_split("/ /",$platforms[1]);
-                $result["device"]["name"] = "mac";
+                $result["device"]["name"] = $platforms[0];
             } else if(preg_match("/iphone/i", $platforms[0]) || preg_match("/ipad/i", $platforms[0]) || preg_match("/ipod/i", $platforms[0])) {
                 $os = preg_split("/ \d/",preg_replace("/cpu /i", "", $platforms[1]));
                 $osv = preg_split("/ /", preg_replace("/ like mac os x/i", "", $platforms[1]));
                 $result["device"]["name"] = $platforms[0];
+            } else if(preg_match("/android/i", $platforms[0])) {
+                $os = preg_split("/ \d/",$platforms[0]);
+                $osv = preg_split("/ /",$platforms[0]);
+                $result["device"]["name"] = $platforms[1];
             }
-            $result["os"]["name"] = isset($os) ? $os[0] : null;
-            $result["os"]["version"] = isset($osv) ? $osv[array_key_last($osv)] : null;
+            if(isset($os)) {
+                $result["os"]["name"] = $os[0];
+            }
+            if(isset($osv)) {
+                $result["os"]["version"] = $osv[array_key_last($osv)];
+            }
+        }
+        if(isset($browser)) {
+            $result["browser"]["name"] = $browser[0];
+            $result["browser"]["version"] = $browser[1];
         }
         return $result;
-    }
-
-    function check_if_bot() {
-        $bot_array = array('/googlebot/i' => 'Google',
-                        '/bingbot/i' => 'Bing',
-                        '/twitterbot/i' => 'Twitter',
-                        '/baiduspider/i' => 'Baidu',
-                        '/yandex/i' => 'Yandex',
-                        '/duckduck/i' => 'DuckDuckGo',
-                        '/archive.org_bot/i' => 'Archive.org');
-        foreach ($bot_array as $regex => $value) { 
-            if (preg_match($regex, $this->ua)) {
-                return TRUE;
-            }
-        }
-        return FALSE;
     }
     
     // Get user language and country from hostname and http header
@@ -433,11 +411,11 @@ class web_analytics {
         $this->db_manager->add("wa_agents", array(
             "id" => $id,
             "agent" => $this->ua,
-            "browser" => $uaa["browser"]["name"],
-            "browser_version" => $uaa["browser"]["version"],
-            "os" => $uaa["os"]["name"],
-            "os_version" => $uaa["os"]["version"],
-            "device" => $uaa["device"]["name"],
+            "browser" => isset($uaa["browser"]["name"]) ? $uaa["browser"]["name"] : null,
+            "browser_version" => isset($uaa["browser"]["version"]) ? $uaa["browser"]["version"] : null,
+            "os" => isset($uaa["os"]["name"]) ? $uaa["os"]["name"] : null,
+            "os_version" => isset($uaa["os"]["version"]) ? $uaa["os"]["version"] : null,
+            "device" => isset($uaa["device"]["name"]) ? $uaa["device"]["name"] : null,
             "mobile" => $this->u_mobile,
             "bot" => $this->u_bot
         ));
@@ -591,7 +569,7 @@ class web_analytics {
                 } else { $this->d = $domain; }
             }
             $this->u_mobile = preg_match('/mobile/i', $this->ua) ? 1 : 0;
-            $this->u_bot = $this->check_if_bot() ? 1 : 0;
+            $this->u_bot = (preg_match('/bot/i', $this->ua) || preg_match('/crawler/i', $this->ua)) ? 1 : 0;
             $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
             $this->u_country_code = $this->get_country_code();
             $this->check_database();
