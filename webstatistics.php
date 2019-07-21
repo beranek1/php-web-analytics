@@ -31,7 +31,7 @@ if($total_requests == 0) {
     return;
 }
 $total_visitors = $web_analytics_db->count("wa_browsers");
-$total_networks = $web_analytics_db->count("wa_networks");
+$total_networks = $web_analytics_db->count("wa_ips");
 $total_isps = $web_analytics_db->count("wa_isps");
 $top_countries = array();
 $top_continents = array();
@@ -71,11 +71,11 @@ foreach($tplngsr = $web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa
     }
 }
 $top_useragents = array();
-foreach($web_analytics_db->query("SELECT `agent_id`, COUNT(*) FROM wa_browsers GROUP BY `agent_id` ORDER BY COUNT(*) DESC;") as $useragent) {
+foreach($web_analytics_db->query("SELECT `user_agent`, COUNT(*) FROM wa_browsers GROUP BY `user_agent` ORDER BY COUNT(*) DESC;") as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];
 }
 $top_isps = array();
-foreach($web_analytics_db->query("SELECT `isp_id`, COUNT(*) FROM wa_networks GROUP BY `isp_id` ORDER BY COUNT(*) DESC;") as $isp) {
+foreach($web_analytics_db->query("SELECT `isp_id`, COUNT(*) FROM wa_ips GROUP BY `isp_id` ORDER BY COUNT(*) DESC;") as $isp) {
     $top_isps[$isp[0]] = $isp[1];
 }
 $top_uris = array();
