@@ -168,19 +168,33 @@ class web_analytics {
     private $u_language = null;
     private $ubid = null;
     
+    private $topleveltocountry = array(
+        "gov" => "US",
+        "edu" => "US",
+        "com" => "US",
+        "net" => "US",
+        "bayern" => "DE"
+    );
+    
+    function get_country_by_host($host, $topleveltocountry = null) {
+        if(isset($host) && filter_var($host, FILTER_VALIDATE_IP) == false) {
+            $domainparts = explode(".", $host);
+            $topleveldomain = $domainparts[count($domainparts) - 1];
+            if(strlen($topleveldomain) == 2) {
+                return strtoupper($topleveldomain);
+            } else if(isset($topleveltocountry) && array_key_exists($topleveldomain, $topleveltocountry)) {
+                return strtoupper($topleveltocountry[$topleveldomain]);
+            }
+        }
+        return null;
+    }
+
     // Get user language and country from hostname and http header
     function get_country_code() {
         if(isset($this->s["HTTP_CF_IPCOUNTRY"])) {
             return $this->s["HTTP_CF_IPCOUNTRY"];
         }
-        if(filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
-            $domainparts = explode(".", $this->u_host);
-            $domainend = $domainparts[count($domainparts) - 1];
-            if(strlen($domainend) == 2) {
-                return strtoupper($domainend);
-            }
-        }
-        return null;
+        return get_country_by_host($this->u_host, $this->topleveltocountry);
     }
     
     // Anonymize ip address
