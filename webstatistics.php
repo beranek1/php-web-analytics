@@ -83,142 +83,158 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
     $top_uris[$uri[0]] = $uri[1];
 }
 ?>
-<html>
-<head>
-<meta name="robots" content="noindex,nofollow">
-<title>WebAnalytics: Statistics</title>
-<style>
-body {
-    font-family: arial, sans-serif;
-    max-width: 100%;
-}
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-tr:nth-child(even) {
-    background-color: #dddddd;
-}
-progress {
-    width: 100%;
-}
-@media only screen and (min-width: 600px) {
-    div {
-        width: 48%; 
-        float: left;
-        padding:1%;
-    }
-}
-</style>
-<script src="wa.js"></script>
-</head>
-<body>
-    <h1>Website statistics</h1>
-    <div>
-    <h2>All time statistics</h2>
-    <table>
-    <tr><td>Total requests</td><td><?php echo $total_requests; ?></td></tr>
-    <tr><td>Total visitors</td><td><?php echo $total_visitors; ?></td></tr>
-    <tr><td>Total networks</td><td><?php echo $total_networks; ?></td></tr>
-    <tr><td>Total ISPs</td><td><?php echo $total_isps; ?></td></tr>
-    <tr><td>Total countries</td><td><?php echo $total_countries; ?></td></tr>
-    <tr><td>Total continents</td><td><?php echo $total_continents; ?></td></tr>
-    <tr><td>Total languages</td><td><?php echo $total_languages; ?></td></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Average visitor</h2>
-    <table>
-    <thead>
-    <tr><th></th><th></th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <tr><td>Requests</td><td><?php echo "".round(($total_requests/$total_visitors), 2).""; ?></td></tr>
-    <tr><td>Country</td><td><?php echo "".array_keys($top_countriesvo)[0].""; ?></td><td><?php echo "".round((array_values($top_countriesvo)[0] / $total_visitors)*100, 2).""; ?>%</td><td><progress value="<?php echo "".((array_values($top_countriesvo)[0] / $total_visitors)*100).""; ?>" max="100"></progress></td></tr>
-    <tr><td>Language</td><td><?php echo "".array_keys($top_languages)[0].""; ?></td><td><?php echo "".round((array_values($top_languages)[0] / $total_visitors)*100, 2).""; ?>%</td><td><progress value="<?php echo "".((array_values($top_languages)[0] / $total_visitors)*100).""; ?>" max="100"></progress></td></tr>
-    <tr><td>User agent</td><td><?php echo "".array_keys($top_useragents)[0].""; ?></td><td><?php echo "".round((array_values($top_useragents)[0] / $total_visitors)*100, 2).""; ?>%</td><td><progress value="<?php echo "".((array_values($top_useragents)[0] / $total_visitors)*100).""; ?>" max="100"></progress></td></tr>
-    <tr><td>ISP</td><td><?php echo "".array_keys($top_isps)[0].""; ?></td><td><?php echo "".round((array_values($top_isps)[0] / $total_visitors)*100, 2).""; ?>%</td><td><progress value="<?php echo "".((array_values($top_isps)[0] / $total_visitors)*100).""; ?>" max="100"></progress></td></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Countries ordered by requests</h2>
-    <table>
-    <thead>
-    <tr><th>Country code</th><th>requests</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_countries as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Countries ordered by visitors</h2>
-    <table>
-    <thead>
-    <tr><th>Country code</th><th>visitors</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Continents ordered by requests</h2>
-    <table>
-    <thead>
-    <tr><th>Continent code</th><th>requests</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_continents as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Languages ordered by visitors</h2>
-    <table>
-    <thead>
-    <tr><th>Language</th><th>visitors</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_languages as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Top user agents ordered by users</h2>
-    <table>
-    <thead>
-    <tr><th>Agent ID</th><th>users</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_useragents as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-    </table>
-    </div>
-    <div>
-    <h2>Top isps ordered by networks</h2>
-    <table>
-    <thead>
-    <tr><th>ISP ID</th><th>networks</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_isps as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_networks)*100, 2)."%</td><td><progress value='".(($value/$total_networks)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_isps; ?></th></tr>
-    </table>
-    </div>
-    <div>
-    <h2>URIs/Pages ordered by requests</h2>
-    <table>
-    <thead>
-    <tr><th>URI</th><th>requests</th><th>proportion</th><th>chart</th></tr>
-    </thead>
-    <?php foreach ($top_uris as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
-    <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-    </table>
-    </div>
-</body>
-<footer>
-    <a href="https://webanalytics.one">Powered by WebAnalytics</a>
-</footer>
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="robots" content="noindex,nofollow">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <title>WebAnalytics: Statistics</title>
+        <script src="wa.js"></script>
+    </head>
+    <body>
+        <nav class="navbar navbar-dark bg-dark">
+            <span class="navbar-brand mb-0 h1">Website statistics</span>
+        </nav>
+        <div class="container-fluid">
+            <div class="jumbotron row">
+                <div class="col">
+                    <h2>All time statistics</h2>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Requests
+                            <span class="badge badge-primary badge-pill"><?php echo $total_requests; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Unique visitors
+                            <span class="badge badge-primary badge-pill"><?php echo $total_visitors; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Networks
+                            <span class="badge badge-primary badge-pill"><?php echo $total_networks; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ISPs
+                            <span class="badge badge-primary badge-pill"><?php echo $total_isps; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Countries
+                            <span class="badge badge-primary badge-pill"><?php echo $total_countries; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Continents
+                            <span class="badge badge-primary badge-pill"><?php echo $total_continents; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Languages
+                            <span class="badge badge-primary badge-pill"><?php echo $total_languages; ?></span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col">
+                    <h2>Average visitor</h2>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Requests
+                            <span class="badge badge-primary badge-pill"><?php echo "".round(($total_requests/$total_visitors), 2).""; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Country
+                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_countriesvo)[0].""; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Language
+                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_languages)[0].""; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            User agent
+                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_useragents)[0].""; ?></span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            ISP
+                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_isps)[0].""; ?></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        <div>
+        <h2>Countries ordered by requests</h2>
+        <table>
+        <thead>
+        <tr><th>Country code</th><th>requests</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_countries as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
+        </table>
+        </div>
+        <div>
+        <h2>Countries ordered by visitors</h2>
+        <table>
+        <thead>
+        <tr><th>Country code</th><th>visitors</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
+        </table>
+        </div>
+        <div>
+        <h2>Continents ordered by requests</h2>
+        <table>
+        <thead>
+        <tr><th>Continent code</th><th>requests</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_continents as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
+        </table>
+        </div>
+        <div>
+        <h2>Languages ordered by visitors</h2>
+        <table>
+        <thead>
+        <tr><th>Language</th><th>visitors</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_languages as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
+        </table>
+        </div>
+        <div>
+        <h2>Top user agents ordered by users</h2>
+        <table>
+        <thead>
+        <tr><th>Agent ID</th><th>users</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_useragents as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
+        </table>
+        </div>
+        <div>
+        <h2>Top isps ordered by networks</h2>
+        <table>
+        <thead>
+        <tr><th>ISP ID</th><th>networks</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_isps as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_networks)*100, 2)."%</td><td><progress value='".(($value/$total_networks)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_isps; ?></th></tr>
+        </table>
+        </div>
+        <div>
+        <h2>URIs/Pages ordered by requests</h2>
+        <table>
+        <thead>
+        <tr><th>URI</th><th>requests</th><th>proportion</th><th>chart</th></tr>
+        </thead>
+        <?php foreach ($top_uris as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
+        <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
+        </table>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    </body>
+    <footer>
+        <a href="https://webanalytics.one">Powered by WebAnalytics</a>
+    </footer>
 </html>
 <?php
 /* Classes */
