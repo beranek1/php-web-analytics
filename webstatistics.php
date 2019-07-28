@@ -159,74 +159,74 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 </div>
             </div>
         <div>
-        <h2>Countries ordered by requests</h2>
-        <table>
-        <thead>
-        <tr><th>Country code</th><th>requests</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_countries as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-        </table>
+            <h2>Countries ordered by requests</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">Country code</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_countries as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
+            </table>
         </div>
         <div>
-        <h2>Countries ordered by visitors</h2>
-        <table>
-        <thead>
-        <tr><th>Country code</th><th>visitors</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-        </table>
+            <h2>Countries ordered by visitors</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">Country code</th><th scope="col">visitors</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
+            </table>
         </div>
         <div>
-        <h2>Continents ordered by requests</h2>
-        <table>
-        <thead>
-        <tr><th>Continent code</th><th>requests</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_continents as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-        </table>
+            <h2>Continents ordered by requests</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">Continent code</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_continents as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
+            </table>
         </div>
         <div>
-        <h2>Languages ordered by visitors</h2>
-        <table>
-        <thead>
-        <tr><th>Language</th><th>visitors</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_languages as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-        </table>
+            <h2>Languages ordered by visitors</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">Language</th><th scope="col">visitors</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_languages as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
+            </table>
         </div>
         <div>
-        <h2>Top user agents ordered by users</h2>
-        <table>
-        <thead>
-        <tr><th>Agent ID</th><th>users</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_useragents as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_visitors)*100, 2)."%</td><td><progress value='".(($value/$total_visitors)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-        </table>
+            <h2>Top user agents ordered by users</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">Agent</th><th scope="col">users</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_useragents as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
+            </table>
         </div>
         <div>
-        <h2>Top isps ordered by networks</h2>
-        <table>
-        <thead>
-        <tr><th>ISP ID</th><th>networks</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_isps as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_networks)*100, 2)."%</td><td><progress value='".(($value/$total_networks)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_isps; ?></th></tr>
-        </table>
+            <h2>Top isps ordered by networks</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">ISP</th><th scope="col">networks</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_isps as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_isps)*100)."%' aria-valuenow='".(($value/$total_isps)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_isps)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_isps; ?></th></tr>
+            </table>
         </div>
         <div>
-        <h2>URIs/Pages ordered by requests</h2>
-        <table>
-        <thead>
-        <tr><th>URI</th><th>requests</th><th>proportion</th><th>chart</th></tr>
-        </thead>
-        <?php foreach ($top_uris as $key => $value) { echo "<tr><td>".$key."</td><td>".$value."</td><td>".round(($value/$total_requests)*100, 2)."%</td><td><progress value='".(($value/$total_requests)*100)."' max='100'></progress></td></tr>"; } ?>
-        <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-        </table>
+            <h2>URIs/Pages ordered by requests</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr><th scope="col">URI</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
+                </thead>
+                <?php foreach ($top_uris as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
+                <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
+            </table>
         </div>
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
