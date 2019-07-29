@@ -192,7 +192,7 @@ class web_analytics {
         if(isset($this->s["HTTP_CF_IPCOUNTRY"])) {
             return $this->s["HTTP_CF_IPCOUNTRY"];
         }
-        return get_country_by_host($host, $this->topleveltocountry);
+        return $this->get_country_by_host($this->u_host, $this->topleveltocountry);
     }
     
     // Anonymize ip address
