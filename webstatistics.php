@@ -164,7 +164,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">Country code</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_countries as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_countries as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
             </table>
         </div>
@@ -174,7 +174,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">Country code</th><th scope="col">visitors</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
             </table>
         </div>
@@ -184,7 +184,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">Continent code</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_continents as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_continents as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
             </table>
         </div>
@@ -194,7 +194,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">Language</th><th scope="col">visitors</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_languages as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_languages as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
             </table>
         </div>
@@ -204,7 +204,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">Agent</th><th scope="col">users</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_useragents as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_useragents as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
             </table>
         </div>
@@ -214,7 +214,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">ISP</th><th scope="col">networks</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_isps as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_isps)*100)."%' aria-valuenow='".(($value/$total_isps)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_isps)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_isps as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_isps)*100)."%' aria-valuenow='".(($value/$total_isps)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_isps)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_isps; ?></th></tr>
             </table>
         </div>
@@ -224,7 +224,7 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
                 <thead class="thead-dark">
                     <tr><th scope="col">URI</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
                 </thead>
-                <?php foreach ($top_uris as $key => $value) { echo "<tr><td scope="row">".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin="0" aria-valuemax="100">".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
+                <?php foreach ($top_uris as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
                 <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
             </table>
         </div>
