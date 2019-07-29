@@ -159,12 +159,10 @@ class web_analytics {
     private $h = null;
     private $d = null;
     private $profile_id = null;
-    private $isp_id = null;
     private $ua = null;
     private $c = null;
     private $u_country_code = null;
     private $u_ip = null;
-    private $u_host = null;
     private $u_language = null;
     private $ubid = null;
     
@@ -190,35 +188,43 @@ class web_analytics {
     }
 
     // Get user language and country from hostname and http header
-    function get_country_code() {
+    function get_country_code($host) {
         if(isset($this->s["HTTP_CF_IPCOUNTRY"])) {
             return $this->s["HTTP_CF_IPCOUNTRY"];
         }
-        return $this->get_country_by_host($this->u_host, $this->topleveltocountry);
+        return $this->get_country_by_host($host, $this->topleveltocountry);
     }
     
     // Anonymize ip address
-    function anonymize_ip() {
-        $prefix = "ipv4";
-        if(filter_var($this->u_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            $prefix = "ipv6";
+    function anonymize_ip($ip) {
+        if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $ipparts = explode(":", $ip);
+            if(count($ipparts) == 8) {
+                $ip = $ipparts[0].":".$ipparts[1].":".$ipparts[2]."::";
+            } else {
+                if($ipparts[2] == "") {
+                    $ip = $ipparts[0].":".$ipparts[1]."::";
+                } else if($ipparts[1] == "") {
+                    $ip = $ipparts[0]."::";
+                } else {
+                    $ip = $ipparts[0].":".$ipparts[1].":".$ipparts[2]."::";
+                }
+            }
+        } else if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $ipparts = explode(".", $ip);
+            if(count($ipparts) == 4) {
+                $ip = $ipparts[0].".".$ipparts[1].".".$ipparts[2].".0";
+            }
         }
-        $this->u_ip = $prefix.".".md5($this->u_ip);
+        return $ip;
     }
 
     function check_database() {
-        $this->db_manager->create_table("wa_isps", array(
-            "id" => "VARCHAR(10) PRIMARY KEY",
-            "domain" => "VARCHAR(127) NOT NULL",
-            "name" => "TEXT",
-            "country" => "VARCHAR(2)",
-            "last_update" => "TIMESTAMP NULL"
-        ));
         $this->db_manager->create_table("wa_ips", array(
             "ip" => "VARCHAR(45) PRIMARY KEY",
             "host" => "VARCHAR(253)",
             "country" => "VARCHAR(2)",
-            "isp_id" => "VARCHAR(10)",
+            "isp" => "VARCHAR(127)",
             "last_update" => "TIMESTAMP NULL"
         ));
         $this->db_manager->create_table("wa_profiles", array(
@@ -264,38 +270,37 @@ class web_analytics {
     }
     
     // Get ISP's unique id
-    function get_isp() {
-        if(isset($this->u_host) && filter_var($this->u_host, FILTER_VALIDATE_IP) == false) {
-            $domain_parts = explode(".", $this->u_host);
+    function get_isp($host) {
+        if(isset($host) && filter_var($host, FILTER_VALIDATE_IP) == false) {
+            $domain_parts = explode(".", $host);
             if(count($domain_parts) >= 2) {
-                $domain = $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
-                $row = $this->db_manager->first("wa_isps", "id", array("domain" => $domain));
-                if($row != null) {
-                    return $row["id"];
-                }
-                $id = $this->db_manager->generate_id();
-                $this->db_manager->add("wa_isps", array(
-                    "id" => $id,
-                    "domain" => $domain,
-                    "country" => $this->u_country_code
-                ));
-                return $id;
+                return $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
             }
         }
         return null;
     }
     
     // Get network's unique id
-    function save_ip() {
-        if(!isset($this->u_ip)) {
-            return;
+    function save_ip($ip, $anonymize = FALSE) {
+        if(!isset($ip)) {
+            return null;
+        }
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            $host = gethostbyaddr($ip);
+        }
+        $isp = $this->get_isp($host);
+        $this->u_country_code = $this->get_country_code($host);
+        if($anonymize) {
+            $ip = $this->anonymize_ip($ip);
+            $host = null;
         }
         $this->db_manager->add("wa_ips", array(
-            "ip" => $this->u_ip,
-            "host" => $this->u_host,
+            "ip" => $ip,
+            "host" => $host,
             "country" => $this->u_country_code,
-            "isp_id" => $this->isp_id
+            "isp" => $isp
         ));
+        return $ip;
     }
     
     // Use cookies set by tracking script to get device's unique profile id
@@ -419,19 +424,12 @@ class web_analytics {
     // Construct: web_analytics({db_manager}, $_SERVER, $_COOKIE)
     // If you don't want to anonymize ip adresses: web_analytics({db_manager}, $_SERVER, $_COOKIE, FALSE)
     // Please remember to write a privacy policy especially if you don't anonymize ip adresses and live in the EU.
-    function __construct($db_manager, $server, $cookies, $anonymousips = TRUE) {
+    function __construct($db_manager, $server, $cookies, $anonymizeips = TRUE) {
         if($db_manager->connected) {
             $this->db_manager = $db_manager;
             $this->s = $server;
             $this->ua = isset($this->s['HTTP_USER_AGENT']) ? strtolower($this->s['HTTP_USER_AGENT']) : null;
             $this->c = $cookies;
-            $this->u_ip = isset($this->s['REMOTE_ADDR']) ? $this->s['REMOTE_ADDR'] : null;
-            if (filter_var($this->u_ip, FILTER_VALIDATE_IP)) {
-                $this->u_host = gethostbyaddr($this->u_ip);
-            }
-            if($anonymousips && isset($this->s['REMOTE_ADDR'])) {
-                $this->anonymize_ip();
-            }
             if(isset($this->s["HTTP_HOST"])) {
                 $this->h = $this->s["HTTP_HOST"];
                 $domain = strtolower($this->h);
@@ -441,10 +439,8 @@ class web_analytics {
                 } else { $this->d = $domain; }
             }
             $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
-            $this->u_country_code = $this->get_country_code();
             $this->check_database();
-            $this->isp_id = $this->get_isp();
-            $this->save_ip();
+            $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymizeips);
             $this->profile_id = $this->get_profile();
             $this->ubid = $this->indentify_browser();
             $this->save_request();
