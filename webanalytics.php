@@ -164,7 +164,9 @@ class web_analytics {
     private $u_country_code = null;
     private $u_ip = null;
     private $u_language = null;
+    private $a_language = null;
     private $ubid = null;
+    private $session_id = null;
     
     private $topleveltocountry = array(
         "gov" => "US",
@@ -228,7 +230,7 @@ class web_analytics {
             "last_update" => "TIMESTAMP NULL"
         ));
         $this->db_manager->create_table("wa_profiles", array(
-            "id" => "VARCHAR(10) PRIMARY KEY",
+            "id" => "VARCHAR(20) PRIMARY KEY",
             "screen_width" => "VARCHAR(9)",
             "screen_height" => "VARCHAR(9)",
             "interface_width" => "VARCHAR(9)",
@@ -245,16 +247,22 @@ class web_analytics {
             "user_agent" => "TEXT"
         ));
         $this->db_manager->create_table("wa_browsers", array(
-            "id" => "VARCHAR(15) PRIMARY KEY",
+            "id" => "VARCHAR(20) PRIMARY KEY",
             "ip" => "VARCHAR(45) NOT NULL",
             "country" => "VARCHAR(2)",
             "language" => "VARCHAR(2)",
+            "accept_language" => "TEXT",
             "user_agent" => "TEXT",
             "profile_id" => "VARCHAR(10)",
             "last_update" => "TIMESTAMP NULL"
         ));
+        $this->db_manager->create_table("wa_sessions", array(
+            "id" => "VARCHAR(20) PRIMARY KEY",
+            "browser_id" => "VARCHAR(15)",
+            "last_update" => "TIMESTAMP NULL"
+        ));
         $this->db_manager->create_table("wa_requests", array(
-            "id" => "VARCHAR(15) PRIMARY KEY",
+            "id" => "VARCHAR(20) PRIMARY KEY",
             "accept" => "TEXT",
             "protocol" => "TEXT",
             "port" => "INT(6)",
@@ -265,7 +273,10 @@ class web_analytics {
             "visitor_country" => "VARCHAR(2)",
             "cf_ray_id" => "TEXT",
             "user_agent" => "TEXT",
+            "language" => "VARCHAR(2)",
+            "accept_language" => "TEXT",
             "browser_id" => "VARCHAR(15)",
+            "session_id" => "VARCHAR(20)"
         ));
     }
     
@@ -344,6 +355,8 @@ class web_analytics {
                     $this->db_manager->update("wa_browsers", array(
                         "ip" => $this->u_ip,
                         "profile_id" => $this->profile_id,
+                        "language" => $this->u_language,
+                        "accept_language" => $this->a_language,
                         "user_agent" => $this->ua,
                         "last_update" => date('Y-m-d H:i:s')
                     ), array("id" => $row["browser_id"]));
@@ -397,16 +410,31 @@ class web_analytics {
             "ip" => $this->u_ip,
             "country" => $this->u_country_code,
             "language" => $this->u_language,
+            "accept_language" => $this->a_language,
             "user_agent" => $this->ua,
             "profile_id" => $this->profile_id
         ));
         return $ubid;
     }
+
+    function get_session($browser_id) {
+        $row = $this->db_manager->get_one_row("SELECT id FROM wa_sessions WHERE browser_id = '".$browser_id."' AND (last_update >= '".date('Y-m-d H:i:s', strtotime("-30 minutes"))."' OR `time` >= '".date('Y-m-d H:i:s', strtotime("-30 minutes"))."');");
+        if($row != null) {
+            $this->db_manager->update("wa_trackers", array("last_update" => date('Y-m-d H:i:s')), array("id" => $row["id"]));
+            return $row["id"];
+        }
+        $id = $this->db_manager->generate_id(20);
+        $this->db_manager->add("wa_sessions", array(
+            "id" => $id,
+            "browser_id" => $browser_id
+        ));
+        return $id;
+    }
     
     // Get information about the request and add it to the database
     function save_request() {
         $this->db_manager->add("wa_requests", array(
-            "id" => $this->db_manager->generate_id(15),
+            "id" => $this->db_manager->generate_id(20),
             "accept" => isset($this->d['HTTP_ACCEPT']) ? "".explode(",", $this->s['HTTP_ACCEPT'])[0]."" : null,
             "protocol" => isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null,
             "port" => isset($this->s["SERVER_PORT"]) ? $this->s['SERVER_PORT'] : null,
@@ -417,7 +445,10 @@ class web_analytics {
             "visitor_country" => $this->u_country_code,
             "cf_ray_id" => isset($this->s["HTTP_CF_RAY"]) ? $this->s["HTTP_CF_RAY"] : null,
             "user_agent" => $this->ua,
-            "browser_id" => $this->ubid
+            "language" => $this->u_language,
+            "accept_language" => $this->a_language,
+            "browser_id" => $this->ubid,
+            "session_id" => $this->session_id
         ));
     }
     
@@ -438,11 +469,13 @@ class web_analytics {
                     $this->d = $domain_parts[count($domain_parts) - 2] . "." . $domain_parts[count($domain_parts) - 1];
                 } else { $this->d = $domain; }
             }
+            $this->a_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? $this->s['HTTP_ACCEPT_LANGUAGE'] : null;
             $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
             $this->check_database();
             $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymizeips);
             $this->profile_id = $this->get_profile();
             $this->ubid = $this->indentify_browser();
+            $this->session_id = $this->get_session($this->ubid);
             $this->save_request();
         } else {
             error_log("WebAnalytics unable to connect to database\n");
