@@ -168,33 +168,96 @@ class web_analytics {
     private $ubid = null;
     private $session_id = null;
     
-    private $topleveltocountry = array(
-        "gov" => "US",
-        "edu" => "US",
-        "com" => "US",
-        "net" => "US",
-        "bayern" => "DE"
-    );
-    
-    function get_country_by_host($host, $topleveltocountry = null) {
+    function get_country_by_host($host) {
         if(isset($host) && filter_var($host, FILTER_VALIDATE_IP) == false) {
             $domainparts = explode(".", $host);
             $topleveldomain = $domainparts[count($domainparts) - 1];
             if(strlen($topleveldomain) == 2) {
                 return strtoupper($topleveldomain);
-            } else if(isset($topleveltocountry) && array_key_exists($topleveldomain, $topleveltocountry)) {
-                return strtoupper($topleveltocountry[$topleveldomain]);
+            }
+        }
+        return null;
+    }
+    
+    function get_country_by_ip($ip) {
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            $host = gethostbyaddr($ip);
+            $country = $this->get_country_by_host(gethostbyaddr($ip));
+            if($country == null && $ip != "127.0.0.1" && $ip != "::1") {
+                $country = $this->get_country_by_rdap($ip);
+                if($country == null) {
+                    $domainparts = explode(".", $host);
+                    $topleveldomain = $domainparts[count($domainparts) - 1];
+                    if($topleveldomain == "com" || $topleveldomain == "net" || $topleveldomain == "edu" || $topleveldomain == "gov") {
+                        return "US";
+                    }
+                }
+            }
+            return $country;
+        }
+        return null;
+    }
+    
+    function get_country_by_rdap($query) {
+        if(filter_var($query, FILTER_VALIDATE_IP)) {
+            $ip = $query;
+            if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $iana_ipv4 = file_get_contents("http://data.iana.org/rdap/ipv4.json");
+                if(is_bool($iana_ipv4)) {
+                    return null;
+                }
+                $iana_ipv4 = json_decode($iana_ipv4, true);
+                $ipparts = explode(".", $ip);
+                foreach ($iana_ipv4["services"] as $service) {
+                    foreach ($service[0] as $iprange) {
+                        if($iprange == $ipparts[0].".0.0.0/8") {
+                            $service_rdap = file_get_contents(preg_replace("/https/i", "http", $service[1][0])."ip/".$ip);
+                            if($service_rdap == FALSE) {
+                                return null;
+                            }
+                            $service_rdap = json_decode($service_rdap, true);
+                            if(isset($service_rdap["country"])) {
+                                return strtoupper($service_rdap["country"]);
+                            } else {
+                                return null;
+                            }
+                        }
+                    }
+                }
+            } else if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $iana_ipv6 = file_get_contents("http://data.iana.org/rdap/ipv6.json");
+                if(is_bool($iana_ipv6)) {
+                    return null;
+                }
+                $iana_ipv6 = json_decode($iana_ipv6, true);
+                $ipparts = explode(":", $ip);
+                foreach ($iana_ipv6["services"] as $service) {
+                    foreach ($service[0] as $iprange) {
+                        if(preg_match("/".$ipparts[0].":".$ipparts[1]."::\/\d[\d]*/", $iprange) || preg_match("/".$ipparts[0]."::\/\d[\d]*/", $iprange)) {
+                            $service_rdap = file_get_contents(preg_replace("/https/i", "http", $service[1][0])."ip/".$ip);
+                            if($service_rdap == FALSE) {
+                                return null;
+                            }
+                            $service_rdap = json_decode($service_rdap, true);
+                            if(isset($service_rdap["country"])) {
+                                return strtoupper($service_rdap["country"]);
+                            } else {
+                                return null;
+                            }
+                        }
+                    }
+                }
             }
         }
         return null;
     }
 
     // Get user language and country from hostname and http header
-    function get_country_code($host) {
+    function get_country_code($ip) {
         if(isset($this->s["HTTP_CF_IPCOUNTRY"])) {
             return $this->s["HTTP_CF_IPCOUNTRY"];
         }
-        return $this->get_country_by_host($host, $this->topleveltocountry);
+        return $this->get_country_by_ip($ip);
     }
     
     // Anonymize ip address
@@ -300,7 +363,7 @@ class web_analytics {
             $host = gethostbyaddr($ip);
         }
         $isp = $this->get_isp($host);
-        $this->u_country_code = $this->get_country_code($host);
+        $this->u_country_code = $this->get_country_code($ip);
         if($anonymize) {
             $ip = $this->anonymize_ip($ip);
             $host = null;
