@@ -97,7 +97,7 @@ $last_visitors_by_day = array();
 $last_visitors_by_weekday = array();
 foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests ORDER BY `time` ASC LIMIT 1000;") as $request) {
     $time = $request[0];
-    $daytime = date("h:00", strtotime($time));
+    $daytime = date("H:00", strtotime($time));
     $day = date("Y-m-d", strtotime($time));
     $weekday = date("l", strtotime($time));
     if(isset($last_requests[$time])) {
