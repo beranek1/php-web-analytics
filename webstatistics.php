@@ -88,15 +88,69 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
     $top_uris[$uri[0]] = $uri[1];
 }
 $last_requests = array();
+$last_requests_by_daytime = array();
+$last_requests_by_day = array();
+$last_requests_by_weekday = array();
 $last_visitors = array();
+$last_visitors_by_daytime = array();
+$last_visitors_by_day = array();
+$last_visitors_by_weekday = array();
 foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests ORDER BY `time` ASC LIMIT 1000;") as $request) {
     $time = $request[0];
+    $daytime = date("h:00", strtotime($time));
+    $day = date("Y-m-d", strtotime($time));
+    $weekday = date("l", strtotime($time));
     if(isset($last_requests[$time])) {
         $last_requests[$time] += 1;
     } else {
         $last_requests[$time] = 1;
     }
+    if(isset($last_requests_by_day[$day])) {
+        $last_requests_by_day[$day] += 1;
+    } else {
+        $last_requests_by_day[$day] = 1;
+    }
+    if(isset($last_requests_by_weekday[$weekday])) {
+        $last_requests_by_weekday[$weekday] += 1;
+    } else {
+        $last_requests_by_weekday[$weekday] = 1;
+    }
+    if(isset($last_requests_by_daytime[$daytime])) {
+        $last_requests_by_daytime[$daytime] += 1;
+    } else {
+        $last_requests_by_daytime[$daytime] = 1;
+    }
+    if(isset($last_visitors[$time])) {
+        if(!isset($last_visitors[$time][$request[1]])) {
+            $last_visitors[$time][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors[$time] = array($request[1] => 1);
+    }
+    if(isset($last_visitors_by_day[$day])) {
+        if(!isset($last_visitors_by_day[$time][$request[1]])) {
+            $last_visitors_by_day[$time][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors_by_day[$day] = array($request[1] => 1);
+    }
+    if(isset($last_visitors_by_weekday[$weekday])) {
+        if(!isset($last_visitors_by_weekday[$time][$request[1]])) {
+            $last_visitors_by_weekday[$time][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors_by_weekday[$weekday] = array($request[1] => 1);
+    }
+    if(isset($last_visitors_by_daytime[$daytime])) {
+        if(!isset($last_visitors_by_daytime[$time][$request[1]])) {
+            $last_visitors_by_daytime[$time][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors_by_daytime[$daytime] = array($request[1] => 1);
+    }
 }
+ksort($last_requests_by_daytime);
+ksort($last_visitors_by_daytime);
 ?>
 <!doctype html>
 <html lang="en">
@@ -201,6 +255,32 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                         <div id="tbyt" style="width: 100%;"></div>
                     </div>
                 </div>
+            </div>
+            <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+                <h1>Requests</h1>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="rbyd" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="rbywd" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="rbydt" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="cbyr" style="width: 100%;"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="ctbyr" style="width: 100%;"></div>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col">
                         <h2>URIs/Pages ordered by requests</h2>
@@ -214,37 +294,23 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+            <div class="tab-pane fade" id="visitors" role="tabpanel" aria-labelledby="visitors-tab">
+                <h1>Visitors</h1>
                 <div class="row">
                     <div class="col-md-6">
-                        <h2>Countries by requests</h2>
-                        <div id="cbyr" style="width: 100%;"></div>
+                        <div id="cbyv" style="width: 100%;"></div>
                     </div>
                     <div class="col-md-6">
-                        <h2>Continents</h2>
-                        <div id="ctbyr" style="width: 100%;"></div>
+                        <div id="lbyv" style="width: 100%;"></div>
                     </div>
                 </div>
-            </div>
-            <div class="tab-pane fade" id="visitors" role="tabpanel" aria-labelledby="visitors-tab">
-            <div class="row">
-                <div class="col-md-6">
-                    <h2>Countries by unique visitors</h2>
-                    <div id="cbyv" style="width: 100%;"></div>
-                </div>
-                <div class="col-md-6">
-                    <h2>Languages</h2>
-                    <div id="lbyv" style="width: 100%;"></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <h2>User agents</h2>
-                    <div id="uabyv" style="width: 100%;"></div>
-                </div>
-                <div class="col-md-6">
-                    <h2>Top isps ordered by networks</h2>
-                    <div id="ispbyn" style="width: 100%;"></div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="uabyv" style="width: 100%;"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="ispbyn" style="width: 100%;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -254,13 +320,7 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script>
         google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawtbytChart);
-        google.charts.setOnLoadCallback(drawcbyrChart);
-        google.charts.setOnLoadCallback(drawcbyvChart);
-        google.charts.setOnLoadCallback(drawctbyrChart);
-        google.charts.setOnLoadCallback(drawlbyvChart);
-        google.charts.setOnLoadCallback(drawuabyvChart);
-        google.charts.setOnLoadCallback(drawispbynChart);
+        google.charts.setOnLoadCallback(drawCharts);
         function drawcbyrChart() {
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Country');
@@ -279,7 +339,7 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('cbyr'));
-            chart.draw(data, {'title':'Requests by country'});
+            chart.draw(data, {'title':'Country'});
         }
         function drawcbyvChart() {
             var data = new google.visualization.DataTable();
@@ -299,7 +359,7 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('cbyv'));
-            chart.draw(data, {'title':'Visitors by country'});
+            chart.draw(data, {'title':'Country'});
         }
         function drawctbyrChart() {
             var data = new google.visualization.DataTable();
@@ -319,7 +379,7 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('ctbyr'));
-            chart.draw(data, {'title':'Requests by continent'});
+            chart.draw(data, {'title':'Continent'});
         }
         function drawlbyvChart() {
             var data = new google.visualization.DataTable();
@@ -339,7 +399,7 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('lbyv'));
-            chart.draw(data, {'title':'Visitors by language'});
+            chart.draw(data, {'title':'Language'});
         }
         function drawuabyvChart() {
             var data = new google.visualization.DataTable();
@@ -359,7 +419,7 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('uabyv'));
-            chart.draw(data, {'title':'Visitors by agent'});
+            chart.draw(data, {'title':'User agent'});
         }
         function drawispbynChart() {
             var data = new google.visualization.DataTable();
@@ -379,26 +439,61 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('ispbyn'));
-            chart.draw(data, {'title':'Networks by ISP'});
+            chart.draw(data, {'title':'ISP'});
         }
         function drawtbytChart() {
             var data = google.visualization.arrayToDataTable([
-            ['Day', 'Requests']
+            ['Day', 'Requests', 'Visitors']
             <?php
                 foreach ($last_requests as $key => $value) {
-                    echo ",[new Date('".$key."'), ".$value."]";
+                    echo ",[new Date('".$key."'), ".$value.", ".count($last_visitors[$key])."]";
                 }
                 ?>
             ]);
 
-            var options = {
-            title: 'Traffic'
-            };
-
             var chart = new google.visualization.ColumnChart(document.getElementById('tbyt'));
             chart.draw(data, {title: 'Traffic', explorer: {}});
         }
-        $(window).resize(function(){
+        function drawrbydChart() {
+            var data = google.visualization.arrayToDataTable([
+            ['Day', 'Requests', 'Visitors']
+            <?php
+                foreach ($last_requests_by_day as $key => $value) {
+                    echo ",[new Date('".$key."'), ".$value.", ".count($last_visitors_by_day[$key])."]";
+                }
+                ?>
+            ]);
+
+            var chart = new google.visualization.AreaChart(document.getElementById('rbyd'));
+            chart.draw(data, {title: 'Traffic', explorer: {}});
+        }
+        function drawrbywdChart() {
+            var data = google.visualization.arrayToDataTable([
+            ['Day', 'Requests', 'Visitors']
+            <?php
+                foreach ($last_requests_by_weekday as $key => $value) {
+                    echo ",['".$key."', ".$value.", ".count($last_visitors_by_weekday[$key])."]";
+                }
+                ?>
+            ]);
+
+            var chart = new google.visualization.ColumnChart(document.getElementById('rbywd'));
+            chart.draw(data, {title: 'Day of the week'});
+        }
+        function drawrbydtChart() {
+            var data = google.visualization.arrayToDataTable([
+            ['Day time', 'Requests', 'Visitors']
+            <?php
+                foreach ($last_requests_by_daytime as $key => $value) {
+                    echo ",['".$key."', ".$value.", ".count($last_visitors_by_daytime[$key])."]";
+                }
+                ?>
+            ]);
+
+            var chart = new google.visualization.ColumnChart(document.getElementById('rbydt'));
+            chart.draw(data, {title: 'Day time'});
+        }
+        function drawCharts() {
             drawtbytChart();
             drawcbyrChart();
             drawcbyvChart();
@@ -406,6 +501,15 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
             drawlbyvChart();
             drawuabyvChart();
             drawispbynChart();
+            drawrbydChart();
+            drawrbywdChart();
+            drawrbydtChart()
+        }
+        $(window).resize(function(){
+            drawCharts();
+        });
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            drawCharts();
         });
     </script>
     </body>
