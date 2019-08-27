@@ -48,6 +48,8 @@ foreach($web_analytics_db->query("SELECT `visitor_country`, COUNT(*) FROM wa_req
         $top_continents["?"] = $country[1];
     }
 }
+$top_origins = array_merge($top_countries, $top_continents);
+asort($top_origins);
 arsort($top_continents);
 $total_countries = 0;
 $top_countriesvo = array();
@@ -70,12 +72,12 @@ foreach($tplngsr = $web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa
     }
 }
 $top_useragents = array();
-foreach($web_analytics_db->query("SELECT `user_agent`, COUNT(*) FROM wa_browsers GROUP BY `user_agent` ORDER BY COUNT(*) DESC;") as $useragent) {
+foreach($web_analytics_db->query("SELECT `user_agent`, COUNT(*) FROM wa_browsers GROUP BY `user_agent` ORDER BY COUNT(*) DESC LIMIT 10;") as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];
 }
 $total_isps = 0;
 $top_isps = array();
-foreach($web_analytics_db->query("SELECT `isp`, COUNT(*) FROM wa_ips GROUP BY `isp` ORDER BY COUNT(*) DESC;") as $isp) {
+foreach($web_analytics_db->query("SELECT `isp`, COUNT(*) FROM wa_ips GROUP BY `isp` ORDER BY COUNT(*) DESC LIMIT 10;") as $isp) {
     if($isp[0] != "" && $isp[0] != null) {
         $top_isps[$isp[0]] = $isp[1];
         $total_isps++;
@@ -84,7 +86,7 @@ foreach($web_analytics_db->query("SELECT `isp`, COUNT(*) FROM wa_ips GROUP BY `i
     }
 }
 $top_uris = array();
-foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP BY `uri` ORDER BY COUNT(*) DESC;") as $uri) {
+foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP BY `uri` ORDER BY COUNT(*) DESC LIMIT 10;") as $uri) {
     $top_uris[$uri[0]] = $uri[1];
 }
 $last_requests = array();
@@ -97,8 +99,8 @@ $last_visitors_by_day = array();
 $last_visitors_by_weekday = array();
 foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests ORDER BY `time` ASC LIMIT 1000;") as $request) {
     $time = $request[0];
-    $daytime = date("H:00", strtotime($time));
-    $day = date("Y-m-d", strtotime($time));
+    $daytime = date("[H, 0, 0]", strtotime($time));
+    $day = date("Y, m, d", strtotime($time));
     $weekday = date("l", strtotime($time));
     if(isset($last_requests[$time])) {
         $last_requests[$time] += 1;
@@ -175,10 +177,13 @@ ksort($last_visitors_by_daytime);
                         <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home <span class="sr-only">(current)</span></a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="requests-tab" data-toggle="tab" href="#requests" role="tab" aria-controls="requests" aria-selected="false">Requests</a>
+                        <a class="nav-link" id="traffic-tab" data-toggle="tab" href="#traffic" role="tab" aria-controls="requests" aria-selected="false">Traffic</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" id="visitors-tab" data-toggle="tab" href="#visitors" role="tab" aria-controls="visitors" aria-selected="false">Visitors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="origin-tab" data-toggle="tab" href="#origin" role="tab" aria-controls="origin" aria-selected="false">Origin</a>
                     </li>
                 </ul>
                 <form class="form-inline my-2 my-lg-0">
@@ -249,38 +254,80 @@ ksort($last_visitors_by_daytime);
                         </ul>
                     </div>
                 </div>
+                <h1>Traffic</h1>
                 <div class="row">
                     <div class="col-md-12">
-                        <h2>Traffic</h2>
-                        <div id="tbyt" style="width: 100%;"></div>
+                        <div class="card">
+                            <div class="card-header">
+                                Traffic
+                            </div>
+                            <div class="card-body">
+                                <div id="rbyd" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Week day
+                            </div>
+                            <div class="card-body">
+                                <div id="rbywd" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Day time
+                            </div>
+                            <div class="card-body">
+                                <div id="rbydt" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Origin
+                            </div>
+                            <div class="card-body">
+                                <div id="obyr" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Language
+                            </div>
+                            <div class="card-body">
+                                <div id="lbyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                User agent
+                            </div>
+                            <div class="card-body">
+                                <div id="uabyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
-                <h1>Requests</h1>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="rbyd" style="width: 100%;"></div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="rbywd" style="width: 100%;"></div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="rbydt" style="width: 100%;"></div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div id="cbyr" style="width: 100%;"></div>
-                    </div>
-                    <div class="col-md-6">
-                        <div id="ctbyr" style="width: 100%;"></div>
-                    </div>
-                </div>
+            <div class="tab-pane fade" id="traffic" role="tabpanel" aria-labelledby="traffic-tab">
+                <h1>Traffic</h1>
                 <div class="row">
                     <div class="col">
                         <h2>URIs/Pages ordered by requests</h2>
@@ -301,15 +348,18 @@ ksort($last_visitors_by_daytime);
                         <div id="cbyv" style="width: 100%;"></div>
                     </div>
                     <div class="col-md-6">
-                        <div id="lbyv" style="width: 100%;"></div>
+                        <div id="ispbyn" style="width: 100%;"></div>
                     </div>
                 </div>
+            </div>
+            <div class="tab-pane fade" id="origin" role="tabpanel" aria-labelledby="origin-tab">
+                <h1>Origin</h1>
                 <div class="row">
                     <div class="col-md-6">
-                        <div id="uabyv" style="width: 100%;"></div>
+                        <div id="cbyr" style="width: 100%;"></div>
                     </div>
                     <div class="col-md-6">
-                        <div id="ispbyn" style="width: 100%;"></div>
+                        <div id="ctbyr" style="width: 100%;"></div>
                     </div>
                 </div>
             </div>
@@ -319,27 +369,40 @@ ksort($last_visitors_by_daytime);
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script>
-        google.charts.load('current', {'packages':['corechart']});
+        google.charts.load('current', {'packages':['corechart', 'bar', 'line']});
         google.charts.setOnLoadCallback(drawCharts);
-        function drawcbyrChart() {
+        var reqvisOptions = {
+                series: {
+                    0: { axis: 'requests' },
+                    1: { axis: 'visitors' }
+                },
+                axes: {
+                    y: {
+                        distance: {label: 'requests'},
+                        brightness: {side: 'right', label: 'visitors'}
+                    }
+                }
+            };
+        function drawobyrChart() {
             var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Country');
+            data.addColumn('string', 'Origin');
             data.addColumn('number', 'Requests');
+            data.addColumn('number', 'Visitors');
             data.addRows([
                 <?php
                 $i = 0;
-                foreach ($top_countries as $key => $value) {
+                foreach ($top_origins as $key => $value) {
                     if($i == 0) {
-                        echo "['".$key."', ".$value."]";
+                        echo "['".$key."', ".$value.", ".$top_countriesvo[$key]."]";
                         $i++;
                     } else {
-                        echo ",['".$key."', ".$value."]";
+                        echo ",['".$key."', ".$value.", ".$top_countriesvo[$key]."]";
                     }
                 }
                 ?>
             ]);
-            var chart = new google.visualization.PieChart(document.getElementById('cbyr'));
-            chart.draw(data, {'title':'Country'});
+            var chart = new google.charts.Bar(document.getElementById('obyr'));
+            chart.draw(data, {});
         }
         function drawcbyvChart() {
             var data = new google.visualization.DataTable();
@@ -359,6 +422,26 @@ ksort($last_visitors_by_daytime);
                 ?>
             ]);
             var chart = new google.visualization.PieChart(document.getElementById('cbyv'));
+            chart.draw(data, {'title':'Country'});
+        }
+        function drawcbyrChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Country');
+            data.addColumn('number', 'Requests');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_countries as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.visualization.PieChart(document.getElementById('cbyr'));
             chart.draw(data, {'title':'Country'});
         }
         function drawctbyrChart() {
@@ -398,8 +481,8 @@ ksort($last_visitors_by_daytime);
                 }
                 ?>
             ]);
-            var chart = new google.visualization.PieChart(document.getElementById('lbyv'));
-            chart.draw(data, {'title':'Language'});
+            var chart = new google.charts.Bar(document.getElementById('lbyv'));
+            chart.draw(data, {});
         }
         function drawuabyvChart() {
             var data = new google.visualization.DataTable();
@@ -418,7 +501,7 @@ ksort($last_visitors_by_daytime);
                 }
                 ?>
             ]);
-            var chart = new google.visualization.PieChart(document.getElementById('uabyv'));
+            var chart = new google.charts.Bar(document.getElementById('uabyv'));
             chart.draw(data, {'title':'User agent'});
         }
         function drawispbynChart() {
@@ -441,31 +524,18 @@ ksort($last_visitors_by_daytime);
             var chart = new google.visualization.PieChart(document.getElementById('ispbyn'));
             chart.draw(data, {'title':'ISP'});
         }
-        function drawtbytChart() {
-            var data = google.visualization.arrayToDataTable([
-            ['Day', 'Requests', 'Visitors']
-            <?php
-                foreach ($last_requests as $key => $value) {
-                    echo ",[new Date('".$key."'), ".$value.", ".count($last_visitors[$key])."]";
-                }
-                ?>
-            ]);
-
-            var chart = new google.visualization.ColumnChart(document.getElementById('tbyt'));
-            chart.draw(data, {title: 'Traffic', explorer: {}});
-        }
         function drawrbydChart() {
             var data = google.visualization.arrayToDataTable([
             ['Day', 'Requests', 'Visitors']
             <?php
                 foreach ($last_requests_by_day as $key => $value) {
-                    echo ",[new Date('".$key."'), ".$value.", ".count($last_visitors_by_day[$key])."]";
+                    echo ",[new Date(".$key."), ".$value.", ".count($last_visitors_by_day[$key])."]";
                 }
                 ?>
             ]);
 
-            var chart = new google.visualization.AreaChart(document.getElementById('rbyd'));
-            chart.draw(data, {title: 'Traffic', explorer: {}});
+            var chart = new google.charts.Line(document.getElementById('rbyd'));
+            chart.draw(data, reqvisOptions);
         }
         function drawrbywdChart() {
             var data = google.visualization.arrayToDataTable([
@@ -476,34 +546,42 @@ ksort($last_visitors_by_daytime);
                 }
                 ?>
             ]);
-
-            var chart = new google.visualization.ColumnChart(document.getElementById('rbywd'));
-            chart.draw(data, {title: 'Day of the week'});
+            var chart = new google.charts.Bar(document.getElementById('rbywd'));
+            chart.draw(data, {});
         }
         function drawrbydtChart() {
-            var data = google.visualization.arrayToDataTable([
-            ['Day time', 'Requests', 'Visitors']
+            var data = new google.visualization.DataTable();
+            data.addColumn('timeofday', 'Time of Day');
+            data.addColumn('number', 'Requests');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
             <?php
+                $i = 0;
                 foreach ($last_requests_by_daytime as $key => $value) {
-                    echo ",['".$key."', ".$value.", ".count($last_visitors_by_daytime[$key])."]";
+                    if($i == 0) {
+                        echo "[".$key.", ".$value.", ".count($last_visitors_by_daytime[$key])."]";
+                        $i++;
+                    } else {
+                        echo ",[".$key.", ".$value.", ".count($last_visitors_by_daytime[$key])."]";
+                    }
                 }
                 ?>
             ]);
 
-            var chart = new google.visualization.ColumnChart(document.getElementById('rbydt'));
-            chart.draw(data, {title: 'Day time'});
+            var chart = new google.charts.Bar(document.getElementById('rbydt'));
+            chart.draw(data, {});
         }
         function drawCharts() {
-            drawtbytChart();
+            drawobyrChart();
             drawcbyrChart();
-            drawcbyvChart();
             drawctbyrChart();
+            drawcbyvChart();
             drawlbyvChart();
             drawuabyvChart();
             drawispbynChart();
             drawrbydChart();
             drawrbywdChart();
-            drawrbydtChart()
+            drawrbydtChart();
         }
         $(window).resize(function(){
             drawCharts();
