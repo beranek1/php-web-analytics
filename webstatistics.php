@@ -130,22 +130,22 @@ foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests O
         $last_visitors[$time] = array($request[1] => 1);
     }
     if(isset($last_visitors_by_day[$day])) {
-        if(!isset($last_visitors_by_day[$time][$request[1]])) {
-            $last_visitors_by_day[$time][$request[1]] = 1;
+        if(!isset($last_visitors_by_day[$day][$request[1]])) {
+            $last_visitors_by_day[$day][$request[1]] = 1;
         }
     } else {
         $last_visitors_by_day[$day] = array($request[1] => 1);
     }
     if(isset($last_visitors_by_weekday[$weekday])) {
-        if(!isset($last_visitors_by_weekday[$time][$request[1]])) {
-            $last_visitors_by_weekday[$time][$request[1]] = 1;
+        if(!isset($last_visitors_by_weekday[$weekday][$request[1]])) {
+            $last_visitors_by_weekday[$weekday][$request[1]] = 1;
         }
     } else {
-        $last_visitors_by_weekday[$weekday] = array($request[1] => 1);
+            $last_visitors_by_weekday[$weekday] = array($request[1] => 1);
     }
     if(isset($last_visitors_by_daytime[$daytime])) {
-        if(!isset($last_visitors_by_daytime[$time][$request[1]])) {
-            $last_visitors_by_daytime[$time][$request[1]] = 1;
+        if(!isset($last_visitors_by_daytime[$daytime][$request[1]])) {
+            $last_visitors_by_daytime[$daytime][$request[1]] = 1;
         }
     } else {
         $last_visitors_by_daytime[$daytime] = array($request[1] => 1);
