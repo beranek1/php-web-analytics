@@ -72,8 +72,21 @@ foreach($tplngsr = $web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa
     }
 }
 $top_useragents = array();
+$top_browsers = array();
+$top_oss = array();
 foreach($web_analytics_db->query("SELECT `user_agent`, COUNT(*) FROM wa_browsers GROUP BY `user_agent` ORDER BY COUNT(*) DESC LIMIT 10;") as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];
+    $uaa = analyse_user_agent($useragent[0]);
+    if(isset($top_browsers[$uaa["browser"]["name"]])) {
+        $top_browsers[$uaa["browser"]["name"]] += $useragent[1];
+    } else {
+        $top_browsers[$uaa["browser"]["name"]] = $useragent[1];
+    }
+    if(isset($top_oss[$uaa["os"]["name"]])) {
+        $top_oss[$uaa["os"]["name"]] += $useragent[1];
+    } else {
+        $top_oss[$uaa["os"]["name"]] = $useragent[1];
+    }
 }
 $total_isps = 0;
 $top_isps = array();
@@ -175,15 +188,6 @@ ksort($last_visitors_by_daytime);
                 <ul class="nav navbar-nav mr-auto mt-2 mt-lg-0" id="myTab" role="tablist">
                     <li class="nav-item">
                         <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home <span class="sr-only">(current)</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="traffic-tab" data-toggle="tab" href="#traffic" role="tab" aria-controls="requests" aria-selected="false">Traffic</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="visitors-tab" data-toggle="tab" href="#visitors" role="tab" aria-controls="visitors" aria-selected="false">Visitors</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="origin-tab" data-toggle="tab" href="#origin" role="tab" aria-controls="origin" aria-selected="false">Origin</a>
                     </li>
                 </ul>
                 <form class="form-inline my-2 my-lg-0">
@@ -317,49 +321,46 @@ ksort($last_visitors_by_daytime);
                     <div class="col-md-6">
                         <div class="card">
                             <div class="card-header">
-                                User agent
+                                ISP
                             </div>
                             <div class="card-body">
-                                <div id="uabyv" style="width: 100%;"></div>
+                                <div id="ispbyn" style="width: 100%;"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="tab-pane fade" id="traffic" role="tabpanel" aria-labelledby="traffic-tab">
-                <h1>Traffic</h1>
                 <div class="row">
-                    <div class="col">
-                        <h2>URIs/Pages ordered by requests</h2>
-                        <table class="table">
-                            <thead class="thead-dark">
-                                <tr><th scope="col">URI</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
-                            </thead>
-                            <?php foreach ($top_uris as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
-                            <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-                        </table>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Browser
+                            </div>
+                            <div class="card-body">
+                                <div id="bbyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Operating system
+                            </div>
+                            <div class="card-body">
+                                <div id="obyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="tab-pane fade" id="visitors" role="tabpanel" aria-labelledby="visitors-tab">
-                <h1>Visitors</h1>
                 <div class="row">
-                    <div class="col-md-6">
-                        <div id="cbyv" style="width: 100%;"></div>
-                    </div>
-                    <div class="col-md-6">
-                        <div id="ispbyn" style="width: 100%;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="origin" role="tabpanel" aria-labelledby="origin-tab">
-                <h1>Origin</h1>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div id="cbyr" style="width: 100%;"></div>
-                    </div>
-                    <div class="col-md-6">
-                        <div id="ctbyr" style="width: 100%;"></div>
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Pages
+                            </div>
+                            <div class="card-body">
+                                <div id="pbyr" style="width: 100%;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -404,66 +405,6 @@ ksort($last_visitors_by_daytime);
             var chart = new google.charts.Bar(document.getElementById('obyr'));
             chart.draw(data, {});
         }
-        function drawcbyvChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Country');
-            data.addColumn('number', 'Visitors');
-            data.addRows([
-                <?php
-                $i = 0;
-                foreach ($top_countriesvo as $key => $value) {
-                    if($i == 0) {
-                        echo "['".$key."', ".$value."]";
-                        $i++;
-                    } else {
-                        echo ",['".$key."', ".$value."]";
-                    }
-                }
-                ?>
-            ]);
-            var chart = new google.visualization.PieChart(document.getElementById('cbyv'));
-            chart.draw(data, {'title':'Country'});
-        }
-        function drawcbyrChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Country');
-            data.addColumn('number', 'Requests');
-            data.addRows([
-                <?php
-                $i = 0;
-                foreach ($top_countries as $key => $value) {
-                    if($i == 0) {
-                        echo "['".$key."', ".$value."]";
-                        $i++;
-                    } else {
-                        echo ",['".$key."', ".$value."]";
-                    }
-                }
-                ?>
-            ]);
-            var chart = new google.visualization.PieChart(document.getElementById('cbyr'));
-            chart.draw(data, {'title':'Country'});
-        }
-        function drawctbyrChart() {
-            var data = new google.visualization.DataTable();
-            data.addColumn('string', 'Continent');
-            data.addColumn('number', 'Requests');
-            data.addRows([
-                <?php
-                $i = 0;
-                foreach ($top_continents as $key => $value) {
-                    if($i == 0) {
-                        echo "['".$key."', ".$value."]";
-                        $i++;
-                    } else {
-                        echo ",['".$key."', ".$value."]";
-                    }
-                }
-                ?>
-            ]);
-            var chart = new google.visualization.PieChart(document.getElementById('ctbyr'));
-            chart.draw(data, {'title':'Continent'});
-        }
         function drawlbyvChart() {
             var data = new google.visualization.DataTable();
             data.addColumn('string', 'Language');
@@ -484,14 +425,14 @@ ksort($last_visitors_by_daytime);
             var chart = new google.charts.Bar(document.getElementById('lbyv'));
             chart.draw(data, {});
         }
-        function drawuabyvChart() {
+        function drawbbyvChart() {
             var data = new google.visualization.DataTable();
-            data.addColumn('string', 'User agent');
+            data.addColumn('string', 'Browser');
             data.addColumn('number', 'Visitors');
             data.addRows([
                 <?php
                 $i = 0;
-                foreach ($top_useragents as $key => $value) {
+                foreach ($top_browsers as $key => $value) {
                     if($i == 0) {
                         echo "['".$key."', ".$value."]";
                         $i++;
@@ -501,8 +442,28 @@ ksort($last_visitors_by_daytime);
                 }
                 ?>
             ]);
-            var chart = new google.charts.Bar(document.getElementById('uabyv'));
-            chart.draw(data, {'title':'User agent'});
+            var chart = new google.charts.Bar(document.getElementById('bbyv'));
+            chart.draw(data, {});
+        }
+        function drawobyvChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'OS');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_oss as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('obyv'));
+            chart.draw(data, {});
         }
         function drawispbynChart() {
             var data = new google.visualization.DataTable();
@@ -521,8 +482,8 @@ ksort($last_visitors_by_daytime);
                 }
                 ?>
             ]);
-            var chart = new google.visualization.PieChart(document.getElementById('ispbyn'));
-            chart.draw(data, {'title':'ISP'});
+            var chart = new google.charts.Bar(document.getElementById('ispbyn'));
+            chart.draw(data, {});
         }
         function drawrbydChart() {
             var data = google.visualization.arrayToDataTable([
@@ -571,17 +532,36 @@ ksort($last_visitors_by_daytime);
             var chart = new google.charts.Bar(document.getElementById('rbydt'));
             chart.draw(data, {});
         }
+        function drawpbyrChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Page');
+            data.addColumn('number', 'Views');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_uris as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('pbyr'));
+            chart.draw(data, {});
+        }
         function drawCharts() {
             drawobyrChart();
-            drawcbyrChart();
-            drawctbyrChart();
-            drawcbyvChart();
             drawlbyvChart();
-            drawuabyvChart();
+            drawbbyvChart();
+            drawobyvChart();
             drawispbynChart();
             drawrbydChart();
             drawrbywdChart();
             drawrbydtChart();
+            drawpbyrChart();
         }
         $(window).resize(function(){
             drawCharts();
@@ -598,6 +578,105 @@ ksort($last_visitors_by_daytime);
     </nav>
 </html>
 <?php
+/* UAA */
+
+function analyse_user_agent($user_agent) {
+    $result = array();
+    $gecko = preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) Gecko\/\d+/i", $user_agent);
+    $webkit = preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent);
+    if(preg_match_all("/\w+\/\d[\d.]*/", $user_agent, $matches)) {
+        $browser = preg_split("/\//",$matches[0][array_key_last($matches[0])]);
+        $trident = (preg_match("/trident/i", $browser[0]) && !$gecko && !$webkit);
+        if($webkit) {
+            if(preg_match("/safari/i", $browser[0])) {
+                $browser = preg_split("/\//",$matches[0][2]);
+                $i = 3;
+                while((preg_match("/version/i", $browser[0]) || preg_match("/mobile/i", $browser[0])) && isset($matches[0][$i])) {
+                    $browser = preg_split("/\//",$matches[0][$i]);
+                    $i++;
+                }
+            }
+        }
+    }
+    if(preg_match("/\([A-Za-z0-9_.\- ;:\/]*\)/", $user_agent, $match)) {
+        $platforms = preg_split("/; /", preg_replace("/\)/", "", preg_replace("/\(/", "", $match[0])));
+        if($trident) {
+            $browser = preg_split("/ /",$platforms[1]);
+            if(preg_match("/msie/i", $browser[0])) {
+                $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[2]));
+                $osv = preg_split("/ /",$platforms[2]);
+                if(preg_match("/xbox/i", $platforms[array_key_last($platforms)])) {
+                    $result["device"]["name"] = $platforms[array_key_last($platforms)];
+                }
+            } else {
+                $browser[0] = "msie";
+                $version = preg_split("/:/", $platforms[array_key_last($platforms)]);
+                $browser[1] = $version[1];
+            }
+        }
+        if(preg_match("/windows/i", $platforms[0])) {
+            $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[0]));
+            $osv = preg_split("/ /",$platforms[0]);
+            if(preg_match("/phone/i", $os[0])) {
+                $result["device"]["name"] = $platforms[array_key_last($platforms)-1]." ".$platforms[array_key_last($platforms)];
+            }
+            if(preg_match("/xbox/i", $platforms[array_key_last($platforms)])) {
+                $result["device"]["name"] = $platforms[array_key_last($platforms)];
+            }
+            if(isset($platforms[2]) && preg_match("/x\d[\d]*/", $platforms[2])) {
+                $result["device"]["cpu"] = $platforms[2];
+            }
+        } else if(preg_match("/linux/i", $platforms[0])) {
+            $i = preg_match("/u/i", $platforms[1]) ? 2 : 1;
+            $os = preg_split("/ \d/",$platforms[$i]);
+            if(preg_match("/android/i", $os[0])) {
+                $osv = preg_split("/ /",$platforms[$i]);
+            } else {
+                $os = preg_split("/ /",$platforms[0]);
+                if(isset($os[1])) {
+                    $result["device"]["cpu"] = $os[1];
+                }
+            }
+            foreach ($platforms as $property) {
+                if(preg_match("/build/i", $property)) {
+                    $device = preg_split("/ build/i", $property);
+                    $result["device"]["name"] = $device[0];
+                }
+            }
+        } else if(preg_match("/linux/i", $platforms[1]) || preg_match("/cros/i", $platforms[1]) || preg_match("/ubuntu/i", $platforms[1])) {
+            $os = preg_split("/ /",$platforms[1]);
+            if(isset($os[1])) {
+                $result["device"]["cpu"] = $os[1];
+            }
+        } else if(preg_match("/macintosh/i", $platforms[0])) {
+            $os = preg_split("/ \d/",preg_replace("/intel /i", "", $platforms[1]));
+            $osv = preg_split("/ /",$platforms[1]);
+            $result["device"]["name"] = $platforms[0];
+        } else if(preg_match("/iphone/i", $platforms[0]) || preg_match("/ipad/i", $platforms[0]) || preg_match("/ipod/i", $platforms[0])) {
+            $os = preg_split("/ \d/",preg_replace("/cpu /i", "", $platforms[1]));
+            $osv = preg_split("/ /", preg_replace("/ like mac os x/i", "", $platforms[1]));
+            $result["device"]["name"] = $platforms[0];
+        } else if(preg_match("/android/i", $platforms[0])) {
+            $os = preg_split("/ \d/",$platforms[0]);
+            $osv = preg_split("/ /",$platforms[0]);
+            $result["device"]["name"] = $platforms[1];
+        }
+        if(isset($os)) {
+            $result["os"]["name"] = $os[0];
+        }
+        if(isset($osv)) {
+            $result["os"]["version"] = $osv[array_key_last($osv)];
+        }
+    }
+    if(isset($browser)) {
+        $result["browser"]["name"] = $browser[0];
+        $result["browser"]["version"] = $browser[1];
+    }
+    $result["is_mobile"] = preg_match('/mobile/i', $user_agent) ? 1 : 0;
+    $result["is_bot"] = (preg_match('/bot/i', $user_agent) || preg_match('/crawler/i', $user_agent)) ? 1 : 0;
+    return $result;
+}
+
 /* Classes */
 
 // WebAnalytics database manager
