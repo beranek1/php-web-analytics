@@ -190,10 +190,6 @@ ksort($last_visitors_by_daytime);
                         <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home <span class="sr-only">(current)</span></a>
                     </li>
                 </ul>
-                <form class="form-inline my-2 my-lg-0">
-                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                </form>
             </div>
         </nav>
         <div class="container-fluid tab-content" id="myTabContent">
@@ -370,7 +366,7 @@ ksort($last_visitors_by_daytime);
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script>
-        google.charts.load('current', {'packages':['corechart', 'bar', 'line']});
+        google.charts.load('current', {'packages':['bar', 'line']});
         google.charts.setOnLoadCallback(drawCharts);
         var reqvisOptions = {
                 series: {
@@ -573,7 +569,7 @@ ksort($last_visitors_by_daytime);
     </body>
     <nav class="navbar navbar-light bg-light">
         <span class="navbar-text">
-                <a href="https://webanalytics.one">Powered by WebAnalytics</a>
+                <a href="https://webanalytics.one">Powered by WebAnalytics</a> / <a href="https://getbootstrap.com">Bootstrap</a> / <a href="https://developers.google.com/chart/">Google Charts</a>
         </span>
     </nav>
 </html>
