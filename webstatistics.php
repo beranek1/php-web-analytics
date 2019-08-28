@@ -48,6 +48,8 @@ foreach($web_analytics_db->query("SELECT `visitor_country`, COUNT(*) FROM wa_req
         $top_continents["?"] = $country[1];
     }
 }
+$top_origins = array_merge($top_countries, $top_continents);
+asort($top_origins);
 arsort($top_continents);
 $total_countries = 0;
 $top_countriesvo = array();
@@ -70,12 +72,25 @@ foreach($tplngsr = $web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa
     }
 }
 $top_useragents = array();
-foreach($web_analytics_db->query("SELECT `user_agent`, COUNT(*) FROM wa_browsers GROUP BY `user_agent` ORDER BY COUNT(*) DESC;") as $useragent) {
+$top_browsers = array();
+$top_oss = array();
+foreach($web_analytics_db->query("SELECT `user_agent`, COUNT(*) FROM wa_browsers GROUP BY `user_agent` ORDER BY COUNT(*) DESC LIMIT 10;") as $useragent) {
     $top_useragents[$useragent[0]] = $useragent[1];
+    $uaa = analyse_user_agent($useragent[0]);
+    if(isset($top_browsers[$uaa["browser"]["name"]])) {
+        $top_browsers[$uaa["browser"]["name"]] += $useragent[1];
+    } else {
+        $top_browsers[$uaa["browser"]["name"]] = $useragent[1];
+    }
+    if(isset($top_oss[$uaa["os"]["name"]])) {
+        $top_oss[$uaa["os"]["name"]] += $useragent[1];
+    } else {
+        $top_oss[$uaa["os"]["name"]] = $useragent[1];
+    }
 }
 $total_isps = 0;
 $top_isps = array();
-foreach($web_analytics_db->query("SELECT `isp`, COUNT(*) FROM wa_ips GROUP BY `isp` ORDER BY COUNT(*) DESC;") as $isp) {
+foreach($web_analytics_db->query("SELECT `isp`, COUNT(*) FROM wa_ips GROUP BY `isp` ORDER BY COUNT(*) DESC LIMIT 10;") as $isp) {
     if($isp[0] != "" && $isp[0] != null) {
         $top_isps[$isp[0]] = $isp[1];
         $total_isps++;
@@ -84,9 +99,73 @@ foreach($web_analytics_db->query("SELECT `isp`, COUNT(*) FROM wa_ips GROUP BY `i
     }
 }
 $top_uris = array();
-foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP BY `uri` ORDER BY COUNT(*) DESC;") as $uri) {
+foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP BY `uri` ORDER BY COUNT(*) DESC LIMIT 10;") as $uri) {
     $top_uris[$uri[0]] = $uri[1];
 }
+$last_requests = array();
+$last_requests_by_daytime = array();
+$last_requests_by_day = array();
+$last_requests_by_weekday = array();
+$last_visitors = array();
+$last_visitors_by_daytime = array();
+$last_visitors_by_day = array();
+$last_visitors_by_weekday = array();
+foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests ORDER BY `time` ASC LIMIT 1000;") as $request) {
+    $time = $request[0];
+    $daytime = date("[H, 0, 0]", strtotime($time));
+    $day = date("Y, m, d", strtotime($time));
+    $weekday = date("l", strtotime($time));
+    if(isset($last_requests[$time])) {
+        $last_requests[$time] += 1;
+    } else {
+        $last_requests[$time] = 1;
+    }
+    if(isset($last_requests_by_day[$day])) {
+        $last_requests_by_day[$day] += 1;
+    } else {
+        $last_requests_by_day[$day] = 1;
+    }
+    if(isset($last_requests_by_weekday[$weekday])) {
+        $last_requests_by_weekday[$weekday] += 1;
+    } else {
+        $last_requests_by_weekday[$weekday] = 1;
+    }
+    if(isset($last_requests_by_daytime[$daytime])) {
+        $last_requests_by_daytime[$daytime] += 1;
+    } else {
+        $last_requests_by_daytime[$daytime] = 1;
+    }
+    if(isset($last_visitors[$time])) {
+        if(!isset($last_visitors[$time][$request[1]])) {
+            $last_visitors[$time][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors[$time] = array($request[1] => 1);
+    }
+    if(isset($last_visitors_by_day[$day])) {
+        if(!isset($last_visitors_by_day[$day][$request[1]])) {
+            $last_visitors_by_day[$day][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors_by_day[$day] = array($request[1] => 1);
+    }
+    if(isset($last_visitors_by_weekday[$weekday])) {
+        if(!isset($last_visitors_by_weekday[$weekday][$request[1]])) {
+            $last_visitors_by_weekday[$weekday][$request[1]] = 1;
+        }
+    } else {
+            $last_visitors_by_weekday[$weekday] = array($request[1] => 1);
+    }
+    if(isset($last_visitors_by_daytime[$daytime])) {
+        if(!isset($last_visitors_by_daytime[$daytime][$request[1]])) {
+            $last_visitors_by_daytime[$daytime][$request[1]] = 1;
+        }
+    } else {
+        $last_visitors_by_daytime[$daytime] = array($request[1] => 1);
+    }
+}
+ksort($last_requests_by_daytime);
+ksort($last_visitors_by_daytime);
 ?>
 <!doctype html>
 <html lang="en">
@@ -99,151 +178,501 @@ foreach($web_analytics_db->query("SELECT `uri`, COUNT(*) FROM wa_requests GROUP 
         <script src="wa.js"></script>
     </head>
     <body>
-        <nav class="navbar navbar-dark bg-dark">
-            <span class="navbar-brand mb-0 h1">Website statistics</span>
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+            <a class="navbar-brand" href="#">WebAnalytics</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarToggler" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarToggler">
+                <ul class="nav navbar-nav mr-auto mt-2 mt-lg-0" id="myTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                </ul>
+            </div>
         </nav>
-        <div class="container-fluid">
-            <div class="jumbotron row">
-                <div class="col">
-                    <h2>All time statistics</h2>
-                    <ul class="list-group">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Requests
-                            <span class="badge badge-primary badge-pill"><?php echo $total_requests; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Unique visitors
-                            <span class="badge badge-primary badge-pill"><?php echo $total_visitors; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Networks
-                            <span class="badge badge-primary badge-pill"><?php echo $total_networks; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ISPs
-                            <span class="badge badge-primary badge-pill"><?php echo $total_isps; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Countries
-                            <span class="badge badge-primary badge-pill"><?php echo $total_countries; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Continents
-                            <span class="badge badge-primary badge-pill"><?php echo $total_continents; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Languages
-                            <span class="badge badge-primary badge-pill"><?php echo $total_languages; ?></span>
-                        </li>
-                    </ul>
+        <div class="container-fluid tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <div class="jumbotron row">
+                    <div class="col">
+                        <h2>All time statistics</h2>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Requests
+                                <span class="badge badge-primary badge-pill"><?php echo $total_requests; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Unique visitors
+                                <span class="badge badge-primary badge-pill"><?php echo $total_visitors; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Networks
+                                <span class="badge badge-primary badge-pill"><?php echo $total_networks; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                ISPs
+                                <span class="badge badge-primary badge-pill"><?php echo $total_isps; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Countries
+                                <span class="badge badge-primary badge-pill"><?php echo $total_countries; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Continents
+                                <span class="badge badge-primary badge-pill"><?php echo $total_continents; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Languages
+                                <span class="badge badge-primary badge-pill"><?php echo $total_languages; ?></span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <h2>Average visitor</h2>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Requests
+                                <span class="badge badge-primary badge-pill"><?php echo "".round(($total_requests/$total_visitors), 2).""; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Country
+                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_countriesvo)[0].""; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Language
+                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_languages)[0].""; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                User agent
+                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_useragents)[0].""; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                ISP
+                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_isps)[0].""; ?></span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="col">
-                    <h2>Average visitor</h2>
-                    <ul class="list-group">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Requests
-                            <span class="badge badge-primary badge-pill"><?php echo "".round(($total_requests/$total_visitors), 2).""; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Country
-                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_countriesvo)[0].""; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            Language
-                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_languages)[0].""; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            User agent
-                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_useragents)[0].""; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            ISP
-                            <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_isps)[0].""; ?></span>
-                        </li>
-                    </ul>
+                <h1>Traffic</h1>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Traffic
+                            </div>
+                            <div class="card-body">
+                                <div id="rbyd" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Week day
+                            </div>
+                            <div class="card-body">
+                                <div id="rbywd" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Day time
+                            </div>
+                            <div class="card-body">
+                                <div id="rbydt" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Origin
+                            </div>
+                            <div class="card-body">
+                                <div id="obyr" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Language
+                            </div>
+                            <div class="card-body">
+                                <div id="lbyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                ISP
+                            </div>
+                            <div class="card-body">
+                                <div id="ispbyn" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Browser
+                            </div>
+                            <div class="card-body">
+                                <div id="bbyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Operating system
+                            </div>
+                            <div class="card-body">
+                                <div id="obyv" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Pages
+                            </div>
+                            <div class="card-body">
+                                <div id="pbyr" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        <div>
-            <h2>Countries ordered by requests</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">Country code</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_countries as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-            </table>
-        </div>
-        <div>
-            <h2>Countries ordered by visitors</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">Country code</th><th scope="col">visitors</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_countriesvo as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-            </table>
-        </div>
-        <div>
-            <h2>Continents ordered by requests</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">Continent code</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_continents as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-            </table>
-        </div>
-        <div>
-            <h2>Languages ordered by visitors</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">Language</th><th scope="col">visitors</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_languages as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-            </table>
-        </div>
-        <div>
-            <h2>Top user agents ordered by users</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">Agent</th><th scope="col">users</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_useragents as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_visitors)*100)."%' aria-valuenow='".(($value/$total_visitors)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_visitors)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_visitors; ?></th></tr>
-            </table>
-        </div>
-        <div>
-            <h2>Top isps ordered by networks</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">ISP</th><th scope="col">networks</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_isps as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_isps)*100)."%' aria-valuenow='".(($value/$total_isps)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_isps)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_isps; ?></th></tr>
-            </table>
-        </div>
-        <div>
-            <h2>URIs/Pages ordered by requests</h2>
-            <table class="table">
-                <thead class="thead-dark">
-                    <tr><th scope="col">URI</th><th scope="col">requests</th><th scope="col">proportion</th></tr>
-                </thead>
-                <?php foreach ($top_uris as $key => $value) { echo "<tr><td scope='row'>".$key."</td><td>".$value."</td><td><div class='progress'><div class='progress-bar' role='progressbar' style='width: ".(($value/$total_requests)*100)."%' aria-valuenow='".(($value/$total_requests)*100)."' aria-valuemin='0' aria-valuemax='100'>".round(($value/$total_requests)*100, 2)."%</div></div></td></tr>"; } ?>
-                <tr><th>Total</th><th><?php echo $total_requests; ?></th></tr>
-            </table>
         </div>
         <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script>
+        google.charts.load('current', {'packages':['bar', 'line']});
+        google.charts.setOnLoadCallback(drawCharts);
+        var reqvisOptions = {
+                series: {
+                    0: { axis: 'requests' },
+                    1: { axis: 'visitors' }
+                },
+                axes: {
+                    y: {
+                        distance: {label: 'requests'},
+                        brightness: {side: 'right', label: 'visitors'}
+                    }
+                }
+            };
+        function drawobyrChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Origin');
+            data.addColumn('number', 'Requests');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_origins as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value.", ".$top_countriesvo[$key]."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value.", ".$top_countriesvo[$key]."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('obyr'));
+            chart.draw(data, {});
+        }
+        function drawlbyvChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Language');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_languages as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('lbyv'));
+            chart.draw(data, {});
+        }
+        function drawbbyvChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Browser');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_browsers as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('bbyv'));
+            chart.draw(data, {});
+        }
+        function drawobyvChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'OS');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_oss as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('obyv'));
+            chart.draw(data, {});
+        }
+        function drawispbynChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'ISP');
+            data.addColumn('number', 'networks');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_isps as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('ispbyn'));
+            chart.draw(data, {});
+        }
+        function drawrbydChart() {
+            var data = google.visualization.arrayToDataTable([
+            ['Day', 'Requests', 'Visitors']
+            <?php
+                foreach ($last_requests_by_day as $key => $value) {
+                    echo ",[new Date(".$key."), ".$value.", ".count($last_visitors_by_day[$key])."]";
+                }
+                ?>
+            ]);
+
+            var chart = new google.charts.Line(document.getElementById('rbyd'));
+            chart.draw(data, reqvisOptions);
+        }
+        function drawrbywdChart() {
+            var data = google.visualization.arrayToDataTable([
+            ['Day', 'Requests', 'Visitors']
+            <?php
+                foreach ($last_requests_by_weekday as $key => $value) {
+                    echo ",['".$key."', ".$value.", ".count($last_visitors_by_weekday[$key])."]";
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('rbywd'));
+            chart.draw(data, {});
+        }
+        function drawrbydtChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('timeofday', 'Time of Day');
+            data.addColumn('number', 'Requests');
+            data.addColumn('number', 'Visitors');
+            data.addRows([
+            <?php
+                $i = 0;
+                foreach ($last_requests_by_daytime as $key => $value) {
+                    if($i == 0) {
+                        echo "[".$key.", ".$value.", ".count($last_visitors_by_daytime[$key])."]";
+                        $i++;
+                    } else {
+                        echo ",[".$key.", ".$value.", ".count($last_visitors_by_daytime[$key])."]";
+                    }
+                }
+                ?>
+            ]);
+
+            var chart = new google.charts.Bar(document.getElementById('rbydt'));
+            chart.draw(data, {});
+        }
+        function drawpbyrChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('string', 'Page');
+            data.addColumn('number', 'Views');
+            data.addRows([
+                <?php
+                $i = 0;
+                foreach ($top_uris as $key => $value) {
+                    if($i == 0) {
+                        echo "['".$key."', ".$value."]";
+                        $i++;
+                    } else {
+                        echo ",['".$key."', ".$value."]";
+                    }
+                }
+                ?>
+            ]);
+            var chart = new google.charts.Bar(document.getElementById('pbyr'));
+            chart.draw(data, {});
+        }
+        function drawCharts() {
+            drawobyrChart();
+            drawlbyvChart();
+            drawbbyvChart();
+            drawobyvChart();
+            drawispbynChart();
+            drawrbydChart();
+            drawrbywdChart();
+            drawrbydtChart();
+            drawpbyrChart();
+        }
+        $(window).resize(function(){
+            drawCharts();
+        });
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            drawCharts();
+        });
+    </script>
     </body>
     <nav class="navbar navbar-light bg-light">
         <span class="navbar-text">
-                <a href="https://webanalytics.one">Powered by WebAnalytics</a>
+                <a href="https://webanalytics.one">Powered by WebAnalytics</a> / <a href="https://getbootstrap.com">Bootstrap</a> / <a href="https://developers.google.com/chart/">Google Charts</a>
         </span>
     </nav>
 </html>
 <?php
+/* UAA */
+
+function analyse_user_agent($user_agent) {
+    $result = array();
+    $gecko = preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) Gecko\/\d+/i", $user_agent);
+    $webkit = preg_match("/Mozilla\/\d[\d.]* \([A-Za-z0-9_.\- ;:\/]*\) AppleWebKit\/\d[\d.]* \(KHTML, like Gecko\)/i", $user_agent);
+    if(preg_match_all("/\w+\/\d[\d.]*/", $user_agent, $matches)) {
+        $browser = preg_split("/\//",$matches[0][array_key_last($matches[0])]);
+        $trident = (preg_match("/trident/i", $browser[0]) && !$gecko && !$webkit);
+        if($webkit) {
+            if(preg_match("/safari/i", $browser[0])) {
+                $browser = preg_split("/\//",$matches[0][2]);
+                $i = 3;
+                while((preg_match("/version/i", $browser[0]) || preg_match("/mobile/i", $browser[0])) && isset($matches[0][$i])) {
+                    $browser = preg_split("/\//",$matches[0][$i]);
+                    $i++;
+                }
+            }
+        }
+    }
+    if(preg_match("/\([A-Za-z0-9_.\- ;:\/]*\)/", $user_agent, $match)) {
+        $platforms = preg_split("/; /", preg_replace("/\)/", "", preg_replace("/\(/", "", $match[0])));
+        if($trident) {
+            $browser = preg_split("/ /",$platforms[1]);
+            if(preg_match("/msie/i", $browser[0])) {
+                $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[2]));
+                $osv = preg_split("/ /",$platforms[2]);
+                if(preg_match("/xbox/i", $platforms[array_key_last($platforms)])) {
+                    $result["device"]["name"] = $platforms[array_key_last($platforms)];
+                }
+            } else {
+                $browser[0] = "msie";
+                $version = preg_split("/:/", $platforms[array_key_last($platforms)]);
+                $browser[1] = $version[1];
+            }
+        }
+        if(preg_match("/windows/i", $platforms[0])) {
+            $os = preg_split("/ \d/", preg_replace("/ nt/i", "",$platforms[0]));
+            $osv = preg_split("/ /",$platforms[0]);
+            if(preg_match("/phone/i", $os[0])) {
+                $result["device"]["name"] = $platforms[array_key_last($platforms)-1]." ".$platforms[array_key_last($platforms)];
+            }
+            if(preg_match("/xbox/i", $platforms[array_key_last($platforms)])) {
+                $result["device"]["name"] = $platforms[array_key_last($platforms)];
+            }
+            if(isset($platforms[2]) && preg_match("/x\d[\d]*/", $platforms[2])) {
+                $result["device"]["cpu"] = $platforms[2];
+            }
+        } else if(preg_match("/linux/i", $platforms[0])) {
+            $i = preg_match("/u/i", $platforms[1]) ? 2 : 1;
+            $os = preg_split("/ \d/",$platforms[$i]);
+            if(preg_match("/android/i", $os[0])) {
+                $osv = preg_split("/ /",$platforms[$i]);
+            } else {
+                $os = preg_split("/ /",$platforms[0]);
+                if(isset($os[1])) {
+                    $result["device"]["cpu"] = $os[1];
+                }
+            }
+            foreach ($platforms as $property) {
+                if(preg_match("/build/i", $property)) {
+                    $device = preg_split("/ build/i", $property);
+                    $result["device"]["name"] = $device[0];
+                }
+            }
+        } else if(preg_match("/linux/i", $platforms[1]) || preg_match("/cros/i", $platforms[1]) || preg_match("/ubuntu/i", $platforms[1])) {
+            $os = preg_split("/ /",$platforms[1]);
+            if(isset($os[1])) {
+                $result["device"]["cpu"] = $os[1];
+            }
+        } else if(preg_match("/macintosh/i", $platforms[0])) {
+            $os = preg_split("/ \d/",preg_replace("/intel /i", "", $platforms[1]));
+            $osv = preg_split("/ /",$platforms[1]);
+            $result["device"]["name"] = $platforms[0];
+        } else if(preg_match("/iphone/i", $platforms[0]) || preg_match("/ipad/i", $platforms[0]) || preg_match("/ipod/i", $platforms[0])) {
+            $os = preg_split("/ \d/",preg_replace("/cpu /i", "", $platforms[1]));
+            $osv = preg_split("/ /", preg_replace("/ like mac os x/i", "", $platforms[1]));
+            $result["device"]["name"] = $platforms[0];
+        } else if(preg_match("/android/i", $platforms[0])) {
+            $os = preg_split("/ \d/",$platforms[0]);
+            $osv = preg_split("/ /",$platforms[0]);
+            $result["device"]["name"] = $platforms[1];
+        }
+        if(isset($os)) {
+            $result["os"]["name"] = $os[0];
+        }
+        if(isset($osv)) {
+            $result["os"]["version"] = $osv[array_key_last($osv)];
+        }
+    }
+    if(isset($browser)) {
+        $result["browser"]["name"] = $browser[0];
+        $result["browser"]["version"] = $browser[1];
+    }
+    $result["is_mobile"] = preg_match('/mobile/i', $user_agent) ? 1 : 0;
+    $result["is_bot"] = (preg_match('/bot/i', $user_agent) || preg_match('/crawler/i', $user_agent)) ? 1 : 0;
+    return $result;
+}
+
 /* Classes */
 
 // WebAnalytics database manager
