@@ -1,4 +1,6 @@
-# Usage
+# WebAnalytics
+A php web analytics library.
+## Usage
 * Place webanalytics.php and websettings.php in the same directory as your own php scripts, and modify the database parameters in websettings.php.
 #### OR
 * Place only webanalytics.php in the same directory as your own php scripts and modify the database parameters in webanalytics.php.
@@ -31,7 +33,7 @@ As a professional you might also want to try our yet experimental JavaScript for
 <script src="wa.js"></script>
 ```
 
-# Requirements
+## Requirements
 * PHP 5.0 or higher
 * a database server with PDO driver
 * (a webserver of course)
