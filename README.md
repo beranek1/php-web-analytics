@@ -38,6 +38,14 @@ As a professional you might also want to try our yet experimental JavaScript for
 * a database server with PDO driver
 * (a webserver of course)
 
+## Affiliated projects
+* [GeoIP / IP Geo Location](https://geoip.beranek.one)
+* [UAA / User Agent Analyser](https://uaa.beranek.one)
+
+## Frameworks / Libraries used for dashboard
+* [Bootstrap](https://getbootstrap.com)
+* [Google Charts](https://developers.google.com/chart/)
+
 # Information about upcoming releases
 ## 0.3 new API
 This version will include a new universal php script called "wa.php" that can be used for both a library for collecting and analysing data.
