@@ -1,3 +1,4 @@
+# WebAnalytics: The PHP web analytics library
 ## Usage
 * Place webanalytics.php and websettings.php in the same directory as your own php scripts, and modify the database parameters in websettings.php.
 #### OR
