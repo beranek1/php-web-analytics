@@ -1,4 +1,4 @@
-# Usage
+## Usage
 * Place webanalytics.php and websettings.php in the same directory as your own php scripts, and modify the database parameters in websettings.php.
 #### OR
 * Place only webanalytics.php in the same directory as your own php scripts and modify the database parameters in webanalytics.php.
@@ -31,10 +31,18 @@ As a professional you might also want to try our yet experimental JavaScript for
 <script src="wa.js"></script>
 ```
 
-# Requirements
+## Requirements
 * PHP 5.0 or higher
 * a database server with PDO driver
 * (a webserver of course)
+
+## Affiliated projects
+* [GeoIP / IP Geo Location](https://geoip.beranek.one)
+* [UAA / User Agent Analyser](https://uaa.beranek.one)
+
+## Frameworks / Libraries used for dashboard
+* [Bootstrap](https://getbootstrap.com)
+* [Google Charts](https://developers.google.com/chart/)
 
 # Information about upcoming releases
 ## 0.3 new API
