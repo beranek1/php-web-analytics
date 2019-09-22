@@ -139,7 +139,7 @@ class web_db_manager {
             $this->connection = new PDO($this->dsn, $this->user, $this->password);
             $this->connected = TRUE;
         } catch (PDOException $e) {
-            echo "Connection failed: " . $e->getMessage();
+            error_log("Connection failed: " . $e->getMessage());
             $this->connected = FALSE;
         }
     }
