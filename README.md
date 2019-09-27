@@ -1,5 +1,5 @@
 # WebAnalytics
-A php web analytics library.
+Free open-source web analytics with easy integration into existing PHP scripts.
 ## Usage
 * Place webanalytics.php and websettings.php in the same directory as your own php scripts, and modify the database parameters in websettings.php.
 #### OR
