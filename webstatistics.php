@@ -119,7 +119,7 @@ $last_visitors = array();
 $last_visitors_by_daytime = array();
 $last_visitors_by_day = array();
 $last_visitors_by_weekday = array();
-foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests ORDER BY `time` ASC LIMIT 1000;") as $request) {
+foreach($web_analytics_db->query("SELECT `time`, `browser_id` FROM wa_requests ORDER BY `time` LIMIT 1000;") as $request) {
     $time = $request[0];
     $daytime = date("[H, 0, 0]", strtotime($time));
     $day = date("Y, m, d", strtotime($time));
@@ -571,7 +571,7 @@ ksort($last_visitors_by_daytime);
         $(window).resize(function(){
             drawCharts();
         });
-        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
             drawCharts();
         });
     </script>
