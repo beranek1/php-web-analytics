@@ -285,14 +285,14 @@ class web_analytics {
     }
 
     function check_database() {
-        $this->db_manager->create_table("wa_ips", array(
+        $this->db_manager->create_table("wa_ips", [
             "ip" => "VARCHAR(45) PRIMARY KEY",
             "host" => "VARCHAR(253)",
             "country" => "VARCHAR(2)",
             "isp" => "VARCHAR(127)",
             "last_update" => "TIMESTAMP NULL"
-        ));
-        $this->db_manager->create_table("wa_profiles", array(
+        ]);
+        $this->db_manager->create_table("wa_profiles", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "screen_width" => "VARCHAR(9)",
             "screen_height" => "VARCHAR(9)",
@@ -302,14 +302,14 @@ class web_analytics {
             "pixel_depth" => "VARCHAR(7)",
             "cookies_enabled" => "VARCHAR(5)",
             "java_enabled" => "VARCHAR(5)"
-        ));
-        $this->db_manager->create_table("wa_trackers", array(
+        ]);
+        $this->db_manager->create_table("wa_trackers", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "domain" => "TEXT",
             "browser_id" => "VARCHAR(15) NOT NULL",
             "user_agent" => "TEXT"
-        ));
-        $this->db_manager->create_table("wa_browsers", array(
+        ]);
+        $this->db_manager->create_table("wa_browsers", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "ip" => "VARCHAR(45) NOT NULL",
             "country" => "VARCHAR(2)",
@@ -318,13 +318,13 @@ class web_analytics {
             "user_agent" => "TEXT",
             "profile_id" => "VARCHAR(10)",
             "last_update" => "TIMESTAMP NULL"
-        ));
-        $this->db_manager->create_table("wa_sessions", array(
+        ]);
+        $this->db_manager->create_table("wa_sessions", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "browser_id" => "VARCHAR(15)",
             "last_update" => "TIMESTAMP NULL"
-        ));
-        $this->db_manager->create_table("wa_requests", array(
+        ]);
+        $this->db_manager->create_table("wa_requests", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "accept" => "TEXT",
             "protocol" => "TEXT",
@@ -340,7 +340,7 @@ class web_analytics {
             "accept_language" => "TEXT",
             "browser_id" => "VARCHAR(15)",
             "session_id" => "VARCHAR(20)"
-        ));
+        ]);
     }
     
     // Get ISP's unique id
@@ -348,7 +348,7 @@ class web_analytics {
         if(isset($host) && filter_var($host, FILTER_VALIDATE_IP) == false) {
             $domain_parts = explode(".", $host);
             if(count($domain_parts) >= 2) {
-                return $domainparts[count($domainparts) - 2] . "." . $domainparts[count($domainparts) - 1];
+                return $domain_parts[count($domain_parts) - 2] . "." . $domain_parts[count($domain_parts) - 1];
             }
         }
         return null;
