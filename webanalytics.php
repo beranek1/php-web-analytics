@@ -170,10 +170,10 @@ class web_analytics {
     
     function get_country_by_host($host) {
         if(isset($host) && filter_var($host, FILTER_VALIDATE_IP) == false) {
-            $domainparts = explode(".", $host);
-            $topleveldomain = $domainparts[count($domainparts) - 1];
-            if(strlen($topleveldomain) == 2) {
-                return strtoupper($topleveldomain);
+            $domain_parts = explode(".", $host);
+            $top_level_domain = $domain_parts[count($domain_parts) - 1];
+            if(strlen($top_level_domain) == 2) {
+                return strtoupper($top_level_domain);
             }
         }
         return null;
@@ -186,9 +186,9 @@ class web_analytics {
             if($country == null && $ip != "127.0.0.1" && $ip != "::1") {
                 $country = $this->get_country_by_rdap($ip);
                 if($country == null) {
-                    $domainparts = explode(".", $host);
-                    $topleveldomain = $domainparts[count($domainparts) - 1];
-                    if($topleveldomain == "com" || $topleveldomain == "net" || $topleveldomain == "edu" || $topleveldomain == "gov") {
+                    $domain_parts = explode(".", $host);
+                    $top_level_domain = $domain_parts[count($domain_parts) - 1];
+                    if($top_level_domain == "com" || $top_level_domain == "net" || $top_level_domain == "edu" || $top_level_domain == "gov") {
                         return "US";
                     }
                 }
@@ -207,10 +207,10 @@ class web_analytics {
                     return null;
                 }
                 $iana_ipv4 = json_decode($iana_ipv4, true);
-                $ipparts = explode(".", $ip);
+                $ip_parts = explode(".", $ip);
                 foreach ($iana_ipv4["services"] as $service) {
                     foreach ($service[0] as $iprange) {
-                        if($iprange == $ipparts[0].".0.0.0/8") {
+                        if($iprange == $ip_parts[0].".0.0.0/8") {
                             $service_rdap = file_get_contents(preg_replace("/https/i", "http", $service[1][0])."ip/".$ip);
                             if($service_rdap == FALSE) {
                                 return null;
@@ -230,10 +230,10 @@ class web_analytics {
                     return null;
                 }
                 $iana_ipv6 = json_decode($iana_ipv6, true);
-                $ipparts = explode(":", $ip);
+                $ip_parts = explode(":", $ip);
                 foreach ($iana_ipv6["services"] as $service) {
                     foreach ($service[0] as $iprange) {
-                        if(preg_match("/".$ipparts[0].":".$ipparts[1]."::\/\d[\d]*/", $iprange) || preg_match("/".$ipparts[0]."::\/\d[\d]*/", $iprange)) {
+                        if(preg_match("/".$ip_parts[0].":".$ip_parts[1]."::\/\d[\d]*/", $iprange) || preg_match("/".$ip_parts[0]."::\/\d[\d]*/", $iprange)) {
                             $service_rdap = file_get_contents(preg_replace("/https/i", "http", $service[1][0])."ip/".$ip);
                             if($service_rdap == FALSE) {
                                 return null;
@@ -263,22 +263,22 @@ class web_analytics {
     // Anonymize ip address
     function anonymize_ip($ip) {
         if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            $ipparts = explode(":", $ip);
-            if(count($ipparts) == 8) {
-                $ip = $ipparts[0].":".$ipparts[1].":".$ipparts[2]."::";
+            $ip_parts = explode(":", $ip);
+            if(count($ip_parts) == 8) {
+                $ip = $ip_parts[0].":".$ip_parts[1].":".$ip_parts[2]."::";
             } else {
-                if($ipparts[2] == "") {
-                    $ip = $ipparts[0].":".$ipparts[1]."::";
-                } else if($ipparts[1] == "") {
-                    $ip = $ipparts[0]."::";
+                if($ip_parts[2] == "") {
+                    $ip = $ip_parts[0].":".$ip_parts[1]."::";
+                } else if($ip_parts[1] == "") {
+                    $ip = $ip_parts[0]."::";
                 } else {
-                    $ip = $ipparts[0].":".$ipparts[1].":".$ipparts[2]."::";
+                    $ip = $ip_parts[0].":".$ip_parts[1].":".$ip_parts[2]."::";
                 }
             }
         } else if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $ipparts = explode(".", $ip);
-            if(count($ipparts) == 4) {
-                $ip = $ipparts[0].".".$ipparts[1].".".$ipparts[2].".0";
+            $ip_parts = explode(".", $ip);
+            if(count($ip_parts) == 4) {
+                $ip = $ip_parts[0].".".$ip_parts[1].".".$ip_parts[2].".0";
             }
         }
         return $ip;
@@ -368,12 +368,12 @@ class web_analytics {
             $ip = $this->anonymize_ip($ip);
             $host = null;
         }
-        $this->db_manager->add("wa_ips", array(
+        $this->db_manager->add("wa_ips", [
             "ip" => $ip,
             "host" => $host,
             "country" => $this->u_country_code,
             "isp" => $isp
-        ));
+        ]);
         return $ip;
     }
     
@@ -383,7 +383,7 @@ class web_analytics {
             return null;
         }
         $c_profile = array_merge(json_decode($this->c["device_profile"], true), json_decode($this->c["browser_profile"], true));
-        $search_keys = array("screen_width", "screen_height", "interface_width", "interface_height", "color_depth", "pixel_depth", "cookies_enabled", "java_enabled");
+        $search_keys = ["screen_width", "screen_height", "interface_width", "interface_height", "color_depth", "pixel_depth", "cookies_enabled", "java_enabled"];
         $search_query = "";
         $search_count = 0;
         $profile = array("id" => $this->db_manager->generate_id());
@@ -408,21 +408,21 @@ class web_analytics {
     }
     
     // Identify the user and update information
-    function indentify_browser() {
+    function identify_browser() {
         if(isset($this->c["webid"]) && strlen($this->c["webid"]) == 20) {
-            $row = $this->db_manager->first("wa_trackers", "browser_id", array("id" => $this->c["webid"], "domain" => $this->d));
+            $row = $this->db_manager->first("wa_trackers", "browser_id", ["id" => $this->c["webid"], "domain" => $this->d]);
             if($row != null) {
-                $this->db_manager->update("wa_trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $this->c["webid"]));
-                if($this->db_manager->first("wa_browsers", "id", array("id" => $row["browser_id"])) != null) {
+                $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
+                if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
                     setcookie("webid", $this->c["webid"], time()+60*60*24*180, "/", $this->d);
-                    $this->db_manager->update("wa_browsers", array(
+                    $this->db_manager->update("wa_browsers", [
                         "ip" => $this->u_ip,
                         "profile_id" => $this->profile_id,
                         "language" => $this->u_language,
                         "accept_language" => $this->a_language,
                         "user_agent" => $this->ua,
                         "last_update" => date('Y-m-d H:i:s')
-                    ), array("id" => $row["browser_id"]));
+                    ], array("id" => $row["browser_id"]));
                     return $row["browser_id"];
                 }
             }
@@ -441,34 +441,34 @@ class web_analytics {
             $ubid_count++;
         }
         if($ubid_count == 1) {
-            $this->db_manager->update("wa_browsers", array("last_update" => date('Y-m-d H:i:s')), array("id" => $ubid));
-            $cidrow = $this->db_manager->get_one_row("SELECT id, domain, time FROM wa_trackers".$this->db_manager->get_filter(array("browser_id" => $ubid, "user_agent" => $this->ua))." ORDER BY time DESC LIMIT 1;");
+            $this->db_manager->update("wa_browsers", ["last_update" => date('Y-m-d H:i:s')], ["id" => $ubid]);
+            $cidrow = $this->db_manager->get_one_row("SELECT id, domain, time FROM wa_trackers".$this->db_manager->get_filter(["browser_id" => $ubid, "user_agent" => $this->ua])." ORDER BY time DESC LIMIT 1;");
             if($cidrow != null) {
                 if(strtotime($cidrow["time"]) >= strtotime("-90 days") && $cidrow["domain"] == $this->d) {
                     setcookie("webid", $cidrow["id"], time()+60*60*24*180, "/", $this->d);
-                    $this->db_manager->update("wa_trackers", array("time" => date('Y-m-d H:i:s')), array("id" => $cidrow["id"]));
+                    $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $cidrow["id"]]);
                     return $ubid;
                 }
             }
-            $this->db_manager->delete("wa_trackers", array("browser_id" => $ubid, "user_agent" => $this->ua, "domain" => $this->d));
-            $this->db_manager->add("wa_trackers", array(
+            $this->db_manager->delete("wa_trackers", ["browser_id" => $ubid, "user_agent" => $this->ua, "domain" => $this->d]);
+            $this->db_manager->add("wa_trackers", [
                 "id" => $cid,
                 "domain" => $this->d,
                 "browser_id" => $ubid,
                 "user_agent" => $this->ua
-            ));
+            ]);
             setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
             return $ubid;
         }
         $ubid = $this->db_manager->generate_id(15);
-        $this->db_manager->add("wa_trackers", array(
+        $this->db_manager->add("wa_trackers", [
             "id" => $cid,
             "domain" => $this->d,
             "browser_id" => $ubid,
             "user_agent" => $this->ua
-        ));
+        ]);
         setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
-        $this->db_manager->add("wa_browsers", array(
+        $this->db_manager->add("wa_browsers", [
             "id" => $ubid,
             "ip" => $this->u_ip,
             "country" => $this->u_country_code,
@@ -476,27 +476,27 @@ class web_analytics {
             "accept_language" => $this->a_language,
             "user_agent" => $this->ua,
             "profile_id" => $this->profile_id
-        ));
+        ]);
         return $ubid;
     }
 
     function get_session($browser_id) {
         $row = $this->db_manager->get_one_row("SELECT id FROM wa_sessions WHERE browser_id = '".$browser_id."' AND (last_update >= '".date('Y-m-d H:i:s', strtotime("-30 minutes"))."' OR `time` >= '".date('Y-m-d H:i:s', strtotime("-30 minutes"))."');");
         if($row != null) {
-            $this->db_manager->update("wa_trackers", array("last_update" => date('Y-m-d H:i:s')), array("id" => $row["id"]));
+            $this->db_manager->update("wa_trackers", ["last_update" => date('Y-m-d H:i:s')], ["id" => $row["id"]]);
             return $row["id"];
         }
         $id = $this->db_manager->generate_id(20);
-        $this->db_manager->add("wa_sessions", array(
+        $this->db_manager->add("wa_sessions", [
             "id" => $id,
             "browser_id" => $browser_id
-        ));
+        ]);
         return $id;
     }
     
     // Get information about the request and add it to the database
     function save_request() {
-        $this->db_manager->add("wa_requests", array(
+        $this->db_manager->add("wa_requests", [
             "id" => $this->db_manager->generate_id(20),
             "accept" => isset($this->d['HTTP_ACCEPT']) ? "".explode(",", $this->s['HTTP_ACCEPT'])[0]."" : null,
             "protocol" => isset($this->s['REQUEST_SCHEME']) ? $this->s["REQUEST_SCHEME"] : null,
@@ -512,7 +512,7 @@ class web_analytics {
             "accept_language" => $this->a_language,
             "browser_id" => $this->ubid,
             "session_id" => $this->session_id
-        ));
+        ]);
     }
     
     // Construct: web_analytics({db_manager}, $_SERVER, $_COOKIE)
@@ -537,7 +537,7 @@ class web_analytics {
             $this->check_database();
             $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymizeips);
             $this->profile_id = $this->get_profile();
-            $this->ubid = $this->indentify_browser();
+            $this->ubid = $this->identify_browser();
             $this->session_id = $this->get_session($this->ubid);
             $this->save_request();
         } else {
