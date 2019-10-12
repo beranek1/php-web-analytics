@@ -200,6 +200,7 @@ ksort($last_visitors_by_daytime);
                     </li>
                 </ul>
             </div>
+            <button class="btn btn-outline-success my-2 my-sm-0" onclick="window.location.reload();">Refresh</button>
         </nav>
         <div class="container-fluid tab-content" id="myTabContent">
             <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
