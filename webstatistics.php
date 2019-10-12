@@ -253,8 +253,12 @@ ksort($last_visitors_by_daytime);
                                 <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_languages)[0].""; ?></span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                User agent
-                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_useragents)[0].""; ?></span>
+                                Browser
+                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_browsers)[0].""; ?></span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                OS
+                                <span class="badge badge-primary badge-pill"><?php echo "".array_keys($top_oss)[0].""; ?></span>
                             </li>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 ISP
