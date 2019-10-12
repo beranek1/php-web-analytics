@@ -721,10 +721,6 @@ class web_db_manager {
         $result = $this->get_one_row("SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";");
         return $result[0];
     }
-    
-    function get_rows_array($query) {
-        return $this->query($query);
-    }
 
     function get_one_row($query) {
         foreach ($this->query($query) as $row) {
@@ -801,7 +797,7 @@ class web_db_manager {
             $this->connection = new PDO($this->dsn, $this->user, $this->password);
             $this->connected = TRUE;
         } catch (PDOException $e) {
-            echo "Connection failed: " . $e->getMessage();
+            error_log("Connection failed: " . $e->getMessage());
             $this->connected = FALSE;
         }
     }
