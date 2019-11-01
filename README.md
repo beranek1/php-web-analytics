@@ -41,6 +41,7 @@ As a professional you might also want to try our yet experimental JavaScript for
 ## Affiliated projects
 * [GeoIP / IP Geo Location](https://geoip.beranek.one)
 * [UAA / User Agent Analyser](https://uaa.beranek.one)
+* [IPA / IP Anonymizer](https://github.com/beranek1/ip-anonymizer)
 
 ## Frameworks / Libraries used for dashboard
 * [Bootstrap](https://getbootstrap.com)
