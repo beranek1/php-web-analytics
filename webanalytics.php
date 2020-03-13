@@ -334,6 +334,7 @@ class web_analytics {
         return $ip;
     }
 
+    // Create required tables in given database if not existing
     function check_database() {
         $this->db_manager->create_table("wa_ips", [
             "ip" => "VARCHAR(45) PRIMARY KEY",
@@ -566,9 +567,9 @@ class web_analytics {
     }
     
     // Construct: web_analytics({db_manager}, $_SERVER, $_COOKIE)
-    // If you don't want to anonymize ip adresses: web_analytics({db_manager}, $_SERVER, $_COOKIE, FALSE)
-    // Please remember to write a privacy policy especially if you don't anonymize ip adresses and live in the EU.
-    function __construct(web_db_manager $db_manager, $server, $cookies, $anonymizeips = TRUE) {
+    // If you don't want to anonymize ip addresses: web_analytics({db_manager}, $_SERVER, $_COOKIE, FALSE)
+    // Please remember to write a privacy policy especially if you don't anonymize ip addresses and live in the EU.
+    function __construct(web_db_manager $db_manager, $server, $cookies, $anonymize_ip = TRUE) {
         if($db_manager->connected) {
             $this->db_manager = $db_manager;
             $this->s = $server;
@@ -585,7 +586,7 @@ class web_analytics {
             $this->a_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? $this->s['HTTP_ACCEPT_LANGUAGE'] : null;
             $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
             $this->check_database();
-            $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymizeips);
+            $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymize_ip);
             $this->profile_id = $this->get_profile();
             $this->ubid = $this->identify_browser();
             $this->session_id = $this->get_session($this->ubid);

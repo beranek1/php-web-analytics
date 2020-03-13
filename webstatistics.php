@@ -691,12 +691,21 @@ function analyse_user_agent($user_agent) {
 
 // WebAnalytics database manager
 class web_db_manager {
+
+    // Boolean to check whether a database connection has been established
     public $connected = false;
+
+    // Database Connection
     private $connection = null;
+
+    // Database user credentials
     private $user = null;
     private $password = null;
+
+    // Database information
     private $dsn = null;
 
+    // Convert the given array to a SQL filter
     function get_filter($filter) {
         if($filter == null) {
             return "";
@@ -717,22 +726,26 @@ class web_db_manager {
         return $query;
     }
 
+    // Count the elements in the table that match the filter
     function count($table, $filter = null) {
         $result = $this->get_one_row("SELECT COUNT(*) FROM `".$table."`".$this->get_filter($filter).";");
         return $result[0];
     }
 
+    // Get the first row that matches the query
     function get_one_row($query) {
         foreach ($this->query($query) as $row) {
             return $row;
         }
         return null;
     }
-    
+
+    // Get the first row that matches the query
     function first($table, $keys, $filter) {
         return $this->get_one_row("SELECT ".$keys." FROM ".$table."".$this->get_filter($filter)." LIMIT 1;");
     }
-    
+
+    // Generate unique identifier
     function generate_id($length = 10) {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyz';
         $charactersLength = strlen($characters);
@@ -742,7 +755,8 @@ class web_db_manager {
         }
         return $id;
     }
-    
+
+    // Add row to table
     function add($table, $ary) {
         $keys = "";
         $values = "";
@@ -761,14 +775,17 @@ class web_db_manager {
         $this->query("INSERT INTO ".$table." (".$keys.") VALUES (".$values.");");
     }
 
+    // Delete rows that match the filter
     function delete($table, $filter) {
         $this->query("DELETE FROM ".$table."".$this->get_filter($filter).";");
     }
 
+    // Execute query
     function query($query) {
         return $this->connection->query($query);
     }
 
+    // Create table with given name and fields
     function create_table($name, $keys) {
         $query = "CREATE TABLE IF NOT EXISTS `".$name."` (";
         foreach ($keys as $key => $value) {
@@ -778,6 +795,7 @@ class web_db_manager {
         $this->query($query);
     }
 
+    // Update given fields of rows that match filter
     function update($table, $values, $filter) {
         $query = "UPDATE `".$table."` SET ";
         $i = 1;
@@ -792,6 +810,7 @@ class web_db_manager {
         $this->query($query);
     }
 
+    // Connect to database
     function connect() {
         try {
             $this->connection = new PDO($this->dsn, $this->user, $this->password);
@@ -802,10 +821,11 @@ class web_db_manager {
         }
     }
 
+    // Constructor
     function __construct($dsn, $user, $password) {
         $this->dsn = $dsn;
         $this->user = $user;
         $this->password = $password;
-    } 
+    }
 }
 ?>
