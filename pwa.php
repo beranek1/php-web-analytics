@@ -21,10 +21,9 @@ class pwa_browser {
     private $unique_id = null;
     private $ip_address = null;
     private $country = null;
-    private $language = null;
     private $accept_language = null;
     private $user_agent = null;
-    //private $profile_id = null;
+    private $profile_id = null;
     private $last_update = null;
     private $time_created = null;
 
@@ -41,7 +40,7 @@ class pwa_browser {
     }
 
     function get_language() {
-        return $this->language;
+        return $this->accept_language != null ? substr($this->accept_language, 0, 2) : null;
     }
 
     function get_accept_language() {
@@ -81,9 +80,9 @@ class pwa_browser {
                          $unique_id,
                          $ip_address,
                          $country,
-                         $language,
                          $accept_language,
                          $user_agent,
+                         $profile_id,
                          $last_update,
                          $time_created)
     {
@@ -91,9 +90,9 @@ class pwa_browser {
         $this->unique_id = $unique_id;
         $this->ip_address = $ip_address;
         $this->country = $country;
-        $this->language = $language;
         $this->accept_language = $accept_language;
         $this->user_agent = $user_agent;
+        $this->profile_id = $profile_id;
         $this->last_update = $last_update;
         $this->time_created = $time_created;
     }
