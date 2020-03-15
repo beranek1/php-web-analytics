@@ -69,7 +69,6 @@ class pwa_browser {
                 "id" => $this->get_unique_id(),
                 "ip" => $this->get_ip_address(),
                 "country" => $this->get_country(),
-                "language" => $this->get_language(),
                 "accept_language" => $this->get_accept_language(),
                 "user_agent" => $this->get_user_agent(),
                 "profile_id" => $this->get_profile_id()
@@ -110,17 +109,17 @@ class pwa_data {
             "isp" => "VARCHAR(127)",
             "last_update" => "TIMESTAMP NULL"
         ]);
-//        $this->database->create_table("wa_profiles", [
-//            "id" => "VARCHAR(20) PRIMARY KEY",
-//            "screen_width" => "VARCHAR(9)",
-//            "screen_height" => "VARCHAR(9)",
-//            "interface_width" => "VARCHAR(9)",
-//            "interface_height" => "VARCHAR(9)",
-//            "color_depth" => "VARCHAR(7)",
-//            "pixel_depth" => "VARCHAR(7)",
-//            "cookies_enabled" => "VARCHAR(5)",
-//            "java_enabled" => "VARCHAR(5)"
-//        ]);
+        $this->database->create_table("wa_profiles", [
+            "id" => "VARCHAR(20) PRIMARY KEY",
+            "screen_width" => "VARCHAR(9)",
+            "screen_height" => "VARCHAR(9)",
+            "interface_width" => "VARCHAR(9)",
+            "interface_height" => "VARCHAR(9)",
+            "color_depth" => "VARCHAR(7)",
+            "pixel_depth" => "VARCHAR(7)",
+            "cookies_enabled" => "VARCHAR(5)",
+            "java_enabled" => "VARCHAR(5)"
+        ]);
         $this->database->create_table("wa_trackers", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "domain" => "TEXT",
@@ -131,7 +130,6 @@ class pwa_data {
             "id" => "VARCHAR(20) PRIMARY KEY",
             "ip" => "VARCHAR(45) NOT NULL",
             "country" => "VARCHAR(2)",
-            "language" => "VARCHAR(2)",
             "accept_language" => "TEXT",
             "user_agent" => "TEXT",
             "profile_id" => "VARCHAR(10)",
@@ -154,7 +152,6 @@ class pwa_data {
             "visitor_country" => "VARCHAR(2)",
             "cf_ray_id" => "TEXT",
             "user_agent" => "TEXT",
-            "language" => "VARCHAR(2)",
             "accept_language" => "TEXT",
             "browser_id" => "VARCHAR(15)",
             "session_id" => "VARCHAR(20)"
