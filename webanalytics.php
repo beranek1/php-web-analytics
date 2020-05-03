@@ -600,7 +600,7 @@ class web_analytics {
             if(isset($this->s["HTTP_HOST"])) {
                 $this->h = $this->s["HTTP_HOST"];
                 $domain = strtolower($this->h);
-                if(filter_var($domain, FILTER_VALIDATE_IP) == false) {
+                if(filter_var($domain, FILTER_VALIDATE_IP) == false && $domain != "localhost") {
                     $domain_parts = explode(".", $domain);
                     $this->d = $domain_parts[count($domain_parts) - 2] . "." . $domain_parts[count($domain_parts) - 1];
                 } else { $this->d = $domain; }
