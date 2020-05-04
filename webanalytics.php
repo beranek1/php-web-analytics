@@ -484,29 +484,31 @@ class web_analytics {
         return $profile["id"];
     }
 
+    // Generate fingerprint based on available data of browser
     function get_fingerprint() {
         return hash("sha256", $this->u_ip.$this->u_country_code.$this->isp.$this->a_language.$this->ua.$this->profile_id);
     }
     
     // Identify the user and update information
     function identify_browser() {
+        $row = null;
         if(isset($this->c["webid"]) && strlen($this->c["webid"]) == 20) {
             $row = $this->db_manager->first("wa_trackers", "browser_id", ["id" => $this->c["webid"], "domain" => $this->d]);
-            if($row == null) $row = $this->db_manager->first("wa_trackers", "browser_id", ["fingerprint" => $this->get_fingerprint(), "domain" => $this->d]);
-            if($row != null) {
-                $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
-                if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
-                    setcookie("webid", $this->c["webid"], time()+60*60*24*180, "/", $this->d);
-                    $this->db_manager->update("wa_browsers", [
-                        "ip" => $this->u_ip,
-                        "profile_id" => $this->profile_id,
-                        "language" => $this->u_language,
-                        "accept_language" => $this->a_language,
-                        "user_agent" => $this->ua,
-                        "last_update" => date('Y-m-d H:i:s')
-                    ], array("id" => $row["browser_id"]));
-                    return $row["browser_id"];
-                }
+        }
+        if($row == null) $row = $this->db_manager->first("wa_trackers", "browser_id", ["fingerprint" => $this->get_fingerprint(), "domain" => $this->d]);
+        if($row != null) {
+            $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
+            if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
+                setcookie("webid", $row["browser_id"], time()+60*60*24*180, "/", $this->d);
+                $this->db_manager->update("wa_browsers", [
+                    "ip" => $this->u_ip,
+                    "profile_id" => $this->profile_id,
+                    "language" => $this->u_language,
+                    "accept_language" => $this->a_language,
+                    "user_agent" => $this->ua,
+                    "last_update" => date('Y-m-d H:i:s')
+                ], array("id" => $row["browser_id"]));
+                return $row["browser_id"];
             }
         }
         $cid = $this->db_manager->generate_id(20);
