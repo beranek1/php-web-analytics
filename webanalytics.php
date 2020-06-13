@@ -22,11 +22,11 @@ include "websettings.php";
 */
 
 if($web_auto_run) {
-// Connect to database
-$web_analytics_db->connect();
+	// Connect to database
+	$web_analytics_db->connect();
 
-// Runs WebAnalytics
-$web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
+	// Runs WebAnalytics
+	$web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
 }
 
 /* Classes */
@@ -212,6 +212,9 @@ class web_analytics {
     // Session identifier
     private $session_id = null;
 
+    // ISP
+    private $isp = null;
+
     // Use hostname to determine origin country
     function get_country_by_host($host) {
         // Make sure host is set and not an ip address
@@ -380,8 +383,12 @@ class web_analytics {
             "id" => "VARCHAR(20) PRIMARY KEY",
             "domain" => "TEXT",
             "browser_id" => "VARCHAR(15) NOT NULL",
-            "user_agent" => "TEXT"
+            "user_agent" => "TEXT",
+            "fingerprint" => "TEXT"
         ]);
+        if($this->db_manager->get_one_row("SHOW COLUMNS FROM `wa_trackers` LIKE 'fingerprint'") == null) {
+            $this->db_manager->query("ALTER TABLE `wa_trackers` ADD `fingerprint` TEXT AFTER `user_agent`;");
+        }
         $this->db_manager->create_table("wa_browsers", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "ip" => "VARCHAR(45) NOT NULL",
@@ -435,7 +442,7 @@ class web_analytics {
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
             $host = gethostbyaddr($ip);
         }
-        $isp = $this->get_isp($host);
+        $this->isp = $this->get_isp($host);
         $this->u_country_code = $this->get_country_code($ip);
         if($anonymize) {
             $ip = $this->anonymize_ip($ip);
@@ -445,7 +452,7 @@ class web_analytics {
             "ip" => $ip,
             "host" => $host,
             "country" => $this->u_country_code,
-            "isp" => $isp
+            "isp" => $this->isp
         ]);
         return $ip;
     }
@@ -479,67 +486,42 @@ class web_analytics {
         $this->db_manager->add("wa_profiles", $profile);
         return $profile["id"];
     }
+
+    // Generate fingerprint based on available data of browser
+    function get_fingerprint() {
+        return hash("sha256", $this->u_ip.$this->u_country_code.$this->isp.$this->a_language.$this->ua.$this->profile_id);
+    }
     
     // Identify the user and update information
     function identify_browser() {
+        $row = null;
         if(isset($this->c["webid"]) && strlen($this->c["webid"]) == 20) {
-            $row = $this->db_manager->first("wa_trackers", "browser_id", ["id" => $this->c["webid"], "domain" => $this->d]);
-            if($row != null) {
-                $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
-                if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
-                    setcookie("webid", $this->c["webid"], time()+60*60*24*180, "/", $this->d);
-                    $this->db_manager->update("wa_browsers", [
-                        "ip" => $this->u_ip,
-                        "profile_id" => $this->profile_id,
-                        "language" => $this->u_language,
-                        "accept_language" => $this->a_language,
-                        "user_agent" => $this->ua,
-                        "last_update" => date('Y-m-d H:i:s')
-                    ], array("id" => $row["browser_id"]));
-                    return $row["browser_id"];
-                }
+            $row = $this->db_manager->first("wa_trackers", "id,browser_id", ["id" => $this->c["webid"], "domain" => $this->d]);
+        }
+        if($row == null) $row = $this->db_manager->first("wa_trackers", "id,browser_id", ["fingerprint" => $this->get_fingerprint(), "domain" => $this->d]);
+        if($row != null) {
+            $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
+            if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
+                setcookie("webid", $row["id"], time()+60*60*24*180, "/", $this->d);
+                $this->db_manager->update("wa_browsers", [
+                    "ip" => $this->u_ip,
+                    "profile_id" => $this->profile_id,
+                    "language" => $this->u_language,
+                    "accept_language" => $this->a_language,
+                    "user_agent" => $this->ua,
+                    "last_update" => date('Y-m-d H:i:s')
+                ], array("id" => $row["browser_id"]));
+                return $row["browser_id"];
             }
         }
         $cid = $this->db_manager->generate_id(20);
-        $result = null;
-        if($this->u_language != null) {
-            $result = $this->db_manager->query("SELECT id FROM wa_browsers WHERE ip = '".$this->u_ip."' AND user_agent LIKE '".$this->ua."' AND language = '".$this->u_language."' AND last_update >= '".date('Y-m-d H:i:s', strtotime("-48 hours"))."';");
-        } else {
-            $result = $this->db_manager->query("SELECT id FROM wa_browsers WHERE ip = '" . $this->u_ip . "' AND user_agent LIKE '" . $this->ua . "' AND language IS NULL AND last_update >= '" . date('Y-m-d H:i:s', strtotime("-48 hours")) . "';");
-        }
-        // Disabled due to inefficiency and risk
-//        $ubid = "";
-//        $ubid_count = 0;
-//        foreach ($result as $row) {
-//            $ubid = $row["id"];
-//            $ubid_count++;
-//        }
-//        if($ubid_count == 1) {
-//            $this->db_manager->update("wa_browsers", ["last_update" => date('Y-m-d H:i:s')], ["id" => $ubid]);
-//            $cidrow = $this->db_manager->get_one_row("SELECT id, domain, time FROM wa_trackers".$this->db_manager->get_filter(["browser_id" => $ubid, "user_agent" => $this->ua])." ORDER BY time DESC LIMIT 1;");
-//            if($cidrow != null) {
-//                if(strtotime($cidrow["time"]) >= strtotime("-90 days") && $cidrow["domain"] == $this->d) {
-//                    setcookie("webid", $cidrow["id"], time()+60*60*24*180, "/", $this->d);
-//                    $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $cidrow["id"]]);
-//                    return $ubid;
-//                }
-//            }
-//            $this->db_manager->delete("wa_trackers", ["browser_id" => $ubid, "user_agent" => $this->ua, "domain" => $this->d]);
-//            $this->db_manager->add("wa_trackers", [
-//                "id" => $cid,
-//                "domain" => $this->d,
-//                "browser_id" => $ubid,
-//                "user_agent" => $this->ua
-//            ]);
-//            setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
-//            return $ubid;
-//        }
         $ubid = $this->db_manager->generate_id(15);
         $this->db_manager->add("wa_trackers", [
             "id" => $cid,
             "domain" => $this->d,
             "browser_id" => $ubid,
-            "user_agent" => $this->ua
+            "user_agent" => $this->ua,
+            "fingerprint" => $this->get_fingerprint()
         ]);
         setcookie("webid", $cid, time()+60*60*24*180, "/", $this->d);
         $this->db_manager->add("wa_browsers", [
