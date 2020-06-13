@@ -22,11 +22,11 @@ include "websettings.php";
 */
 
 if($web_auto_run) {
-// Connect to database
-$web_analytics_db->connect();
+	// Connect to database
+	$web_analytics_db->connect();
 
-// Runs WebAnalytics
-$web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
+	// Runs WebAnalytics
+	$web_analytics = new web_analytics($web_analytics_db, $_SERVER, $_COOKIE);
 }
 
 /* Classes */
@@ -386,6 +386,9 @@ class web_analytics {
             "user_agent" => "TEXT",
             "fingerprint" => "TEXT"
         ]);
+        if($this->db_manager->get_one_row("SHOW COLUMNS FROM `wa_trackers` LIKE 'fingerprint'") == null) {
+            $this->db_manager->query("ALTER TABLE `wa_trackers` ADD `fingerprint` TEXT AFTER `user_agent`;");
+        }
         $this->db_manager->create_table("wa_browsers", [
             "id" => "VARCHAR(20) PRIMARY KEY",
             "ip" => "VARCHAR(45) NOT NULL",
@@ -493,13 +496,13 @@ class web_analytics {
     function identify_browser() {
         $row = null;
         if(isset($this->c["webid"]) && strlen($this->c["webid"]) == 20) {
-            $row = $this->db_manager->first("wa_trackers", "browser_id", ["id" => $this->c["webid"], "domain" => $this->d]);
+            $row = $this->db_manager->first("wa_trackers", "id,browser_id", ["id" => $this->c["webid"], "domain" => $this->d]);
         }
-        if($row == null) $row = $this->db_manager->first("wa_trackers", "browser_id", ["fingerprint" => $this->get_fingerprint(), "domain" => $this->d]);
+        if($row == null) $row = $this->db_manager->first("wa_trackers", "id,browser_id", ["fingerprint" => $this->get_fingerprint(), "domain" => $this->d]);
         if($row != null) {
             $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
             if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
-                setcookie("webid", $row["browser_id"], time()+60*60*24*180, "/", $this->d);
+                setcookie("webid", $row["id"], time()+60*60*24*180, "/", $this->d);
                 $this->db_manager->update("wa_browsers", [
                     "ip" => $this->u_ip,
                     "profile_id" => $this->profile_id,
