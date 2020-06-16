@@ -3,9 +3,9 @@ Free open-source web analytics with easy integration into existing PHP scripts.
 ## Usage
 * Place webanalytics.php and websettings.php in the same directory as your own php scripts, and modify the database parameters in websettings.php.
 #### OR
-* Place only webanalytics.php in the same directory as your own php scripts and modify the database parameters in webanalytics.php.
+* Place only webanalytics.php in the same directory as your own php scripts and modify the database parameters in webanalytics.php as well as webstatistics.php.
 
-websettings.php / webanalytics.php
+websettings.php / webanalytics.php / webstatistics.php
 ```php
 $web_analytics_db = new web_db_manager("mysql:dbname=database;host=127.0.0.1", "user", "password");
 ```
@@ -15,7 +15,7 @@ Afterwards all you need to do is including webanalytics.php in your own php scri
 include "webanalytics.php";
 ```
 
-After running webanalytics.php once you will see a simple report when opening webstatistics.php.
+Run your script / webanalytics.php once to initialize the database tables, now webstatistics.php will show you an current analysis of your web traffic and visitors.
 
 ### Interested in using WebAnalytics as a library or in a modified way? You can disable auto run in the settings:
 ```php
