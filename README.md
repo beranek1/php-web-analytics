@@ -10,12 +10,12 @@ websettings.php / webanalytics.php
 $web_analytics_db = new web_db_manager("mysql:dbname=database;host=127.0.0.1", "user", "password");
 ```
 
-After that all you need to do is including webanalytics.php in your own php scripts to start collecting data:
+Afterwards all you need to do is including webanalytics.php in your own php scripts to start collecting data:
 ```php
 include "webanalytics.php";
 ```
 
-After collecting enough data you will see a simple report when opening webstatistics.php.
+After running webanalytics.php once you will see a simple report when opening webstatistics.php.
 
 ### Interested in using WebAnalytics as a library or in a modified way? You can disable auto run in the settings:
 ```php
@@ -49,7 +49,7 @@ As a professional you might also want to try our yet experimental JavaScript for
 
 # Information about upcoming releases
 ## 0.3 new API
-This version will include a new universal php script called "wa.php" that can be used for both a library for collecting and analysing data.
+This version will include a new universal php script called "wa.php" that can be used as both a library for collecting and analysing data.
 ## 0.4 new page for viewing statistics based on the API
 ## 0.5 merging all classes to one
 ## 1.0
