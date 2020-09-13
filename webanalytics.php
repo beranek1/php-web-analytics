@@ -41,11 +41,11 @@ class web_db_manager {
     private $connection = null;
 
     // Database user credentials
-    private $user = null;
-    private $password = null;
+    private $user;
+    private $password;
 
     // Database information
-    private $dsn = null;
+    private $dsn;
 
     // Convert the given array to a SQL filter
     function get_filter($filter) {
@@ -500,7 +500,7 @@ class web_analytics {
         }
         if($row == null) $row = $this->db_manager->first("wa_trackers", "id,browser_id", ["fingerprint" => $this->get_fingerprint(), "domain" => $this->d]);
         if($row != null) {
-            $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $this->c["webid"]]);
+            $this->db_manager->update("wa_trackers", ["time" => date('Y-m-d H:i:s')], ["id" => $row["id"]]);
             if($this->db_manager->first("wa_browsers", "id", ["id" => $row["browser_id"]]) != null) {
                 setcookie("webid", $row["id"], time()+60*60*24*180, "/", $this->d);
                 $this->db_manager->update("wa_browsers", [
@@ -591,7 +591,11 @@ class web_analytics {
             $this->a_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? $this->s['HTTP_ACCEPT_LANGUAGE'] : null;
             $this->u_language = isset($this->s["HTTP_ACCEPT_LANGUAGE"]) ? substr($this->s['HTTP_ACCEPT_LANGUAGE'], 0, 2) : null;
             $this->check_database();
-            $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymize_ip);
+            if(isset($this->s["HTTP_X_FORWARDED_FOR"])) {
+                $this->u_ip = $this->save_ip($this->s['HTTP_X_FORWARDED_FOR'], $anonymize_ip);
+            } else {
+                $this->u_ip = $this->save_ip($this->s['REMOTE_ADDR'], $anonymize_ip);
+            }
             $this->profile_id = $this->get_profile();
             $this->ubid = $this->identify_browser();
             $this->session_id = $this->get_session($this->ubid);

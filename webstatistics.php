@@ -49,9 +49,11 @@ foreach($web_analytics_db->query("SELECT `visitor_country`, COUNT(*) FROM wa_req
         $top_countries[$country[0]] = $country[1];
         $continent = $country_to_continent[strtoupper($country[0])];
         if(!array_key_exists($continent, $top_continents)) {
+            $top_continents[$continent] = $country[1];
             $total_continents = $total_continents + 1;
+        } else {
+            $top_continents[$continent] = $top_continents[$continent] + $country[1];
         }
-        $top_continents[$continent] = $top_continents[$continent] + $country[1];
     } else {
         $top_countries["?"] = $country[1];
         $top_continents["?"] = $country[1];
@@ -62,17 +64,25 @@ asort($top_origins);
 arsort($top_continents);
 $total_countries = 0;
 $top_countriesvo = array();
+$top_continentsvo = array();
 foreach($web_analytics_db->query("SELECT `country`, COUNT(*) FROM wa_browsers GROUP BY `country` ORDER BY COUNT(*) DESC;") as $country) {
     if($country[0] != "" && $country[0] != null) {
         $top_countriesvo[$country[0]] = $country[1];
+        $continent = $country_to_continent[strtoupper($country[0])];
+        if(!array_key_exists($continent, $top_continentsvo)) {
+            $top_continentsvo[$continent] = $country[1];
+        } else {
+            $top_continentsvo[$continent] = $top_continentsvo[$continent] + $country[1];
+        }
         $total_countries = $total_countries + 1;
     } else {
         $top_countriesvo["?"] = $country[1];
     }
 }
+$top_originsvo = array_merge($top_countriesvo, $top_continentsvo);
 $top_languages = array();
 $total_languages = 0;
-foreach($tplngsr = $web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa_browsers GROUP BY `language` ORDER BY COUNT(*) DESC;") as $language) {
+foreach($web_analytics_db->query("SELECT `language`, COUNT(*) FROM wa_browsers GROUP BY `language` ORDER BY COUNT(*) DESC;") as $language) {
     if($language[0] != "" && $language[0] != null) {
         $top_languages[$language[0]] = $language[1];
         $total_languages = $total_languages + 1;
@@ -404,10 +414,10 @@ ksort($last_visitors_by_daytime);
                 $i = 0;
                 foreach ($top_origins as $key => $value) {
                     if($i == 0) {
-                        echo "['".$key."', ".$value.", ".$top_countriesvo[$key]."]";
+                        echo "['".$key."', ".$value.", ".$top_originsvo[$key]."]";
                         $i++;
                     } else {
-                        echo ",['".$key."', ".$value.", ".$top_countriesvo[$key]."]";
+                        echo ",['".$key."', ".$value.", ".$top_originsvo[$key]."]";
                     }
                 }
                 ?>
