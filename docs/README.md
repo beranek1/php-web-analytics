@@ -44,10 +44,3 @@ As a professional you might also want to try our yet experimental JavaScript for
 ## Frameworks / Libraries used for dashboard
 * [Bootstrap](https://getbootstrap.com)
 * [Google Charts](https://developers.google.com/chart/)
-
-# Information about upcoming releases
-## 0.3 new API
-This version will include a new universal php script called "wa.php" that can be used for both a library for collecting and analysing data.
-## 0.4 new page for viewing statistics based on the API
-## 0.5 merging all classes to one
-## 1.0

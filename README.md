@@ -41,15 +41,14 @@ As a professional you might also want to try our yet experimental JavaScript for
 ## Affiliated projects
 * [GeoIP / IP Geo Location](https://geoip.beranek.one)
 * [UAA / User Agent Analyser](https://uaa.beranek.one)
-* [IPA / IP Anonymizer](https://github.com/beranek1/ip-anonymizer)
+* [IPA / IP Anonymizer](https://github.com/beranek1/php-ip-anonymizer)
 
 ## Frameworks / Libraries used for dashboard
 * [Bootstrap](https://getbootstrap.com)
 * [Google Charts](https://developers.google.com/chart/)
 
 # Information about upcoming releases
-## 0.3 new API
-This version will include a new universal php script called "wa.php" that can be used as both a library for collecting and analysing data.
-## 0.4 new page for viewing statistics based on the API
-## 0.5 merging all classes to one
-## 1.0
+I've decided to stop implementing new features myself as the possible use cases for this project are very limited. However contributions are still very welcome.
+Feel free to implement new features yourself and submit a merge-request so everyone can benefit from your changes.
+
+I'll (probably) later this year introduce new projects that focus on web analytics solutions for cloud environments like AWS, Tencent Cloud and Alibaba Cloud.
